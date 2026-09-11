@@ -71,9 +71,25 @@
 
                         <!-- Network Interface Selection -->
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="Network Interface / Stream:" Foreground="{StaticResource BrushTextMuted}" FontSize="13" VerticalAlignment="Center" Margin="0,8" />
-                        <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding AvailableInterfaces}" SelectedItem="{Binding SelectedInterface}" 
-                                  IsEnabled="{Binding IsCapturing, Converter={StaticResource InverseBoolConv}}"
-                                  Height="36" Margin="0,8" ToolTip="Select a local network interface or strongSwan testbed stream" />
+                        <Grid Grid.Row="0" Grid.Column="1" Margin="0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0" ItemsSource="{Binding AvailableInterfaces}" SelectedItem="{Binding SelectedInterface}" 
+                                      IsEnabled="{Binding IsCapturing, Converter={StaticResource InverseBoolConv}}"
+                                      Height="36" ToolTip="Select a local network interface or strongSwan testbed stream" />
+                            <Button Grid.Column="1" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding RefreshInterfacesCommand}" 
+                                    IsEnabled="{Binding IsCapturing, Converter={StaticResource InverseBoolConv}}"
+                                    Height="36" Margin="10,0,0,0" Padding="14,0" ToolTip="Rescan and refresh local network adapters and testbed streams">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource IconRefresh}" 
+                                          Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" 
+                                          Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <TextBlock Text="Refresh" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
 
                         <!-- Capture Duration -->
                         <TextBlock Grid.Row="1" Grid.Column="0" Text="Duration (seconds):" Foreground="{StaticResource BrushTextMuted}" FontSize="13" VerticalAlignment="Center" Margin="0,8" />
@@ -132,8 +148,14 @@
 
                         <!-- Refresh -->
                         <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding RefreshInterfacesCommand}" 
-                                Height="36" Width="100" Margin="12,0,0,0" ToolTip="Refresh available interfaces">
-                            <TextBlock Text="Refresh" VerticalAlignment="Center" />
+                                IsEnabled="{Binding IsCapturing, Converter={StaticResource InverseBoolConv}}"
+                                Height="36" Margin="12,0,0,0" Padding="14,0" ToolTip="Rescan and refresh available network interfaces">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconRefresh}" 
+                                      Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" 
+                                      Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <TextBlock Text="Refresh" VerticalAlignment="Center" />
+                            </StackPanel>
                         </Button>
                     </StackPanel>
                 </StackPanel>

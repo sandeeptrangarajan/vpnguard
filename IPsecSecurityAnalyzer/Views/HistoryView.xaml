@@ -29,8 +29,13 @@
                            Visibility="{Binding StatusMessage, Converter={StaticResource NullToVisConv}}" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding RefreshHistoryCommand}" Height="34" Margin="0,0,10,0">
-                    <TextBlock Text="↻ Refresh" VerticalAlignment="Center" />
+                <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding RefreshHistoryCommand}" Height="34" Margin="0,0,10,0" Padding="12,0" ToolTip="Reload audit history">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="{StaticResource IconRefresh}" 
+                              Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" 
+                              Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBlock Text="Refresh" VerticalAlignment="Center" />
+                    </StackPanel>
                 </Button>
                 <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding ClearAllHistoryCommand}" Height="34" ToolTip="Purge all audit records from SQLite database">
                     <TextBlock Text="Purge History" VerticalAlignment="Center" Foreground="#EF4444" />
