@@ -1,0 +1,150 @@
+<UserControl x:Class="IPsecSecurityAnalyzer.Views.FindingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:conv="clr-namespace:IPsecSecurityAnalyzer.Utilities.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="1100">
+
+    <UserControl.Resources>
+        <conv:BooleanToVisibilityConverter x:Key="BoolToVisConv" />
+        <conv:InverseBooleanConverter x:Key="InvBoolConv" />
+        <conv:SeverityToBrushConverter x:Key="SevToBrushConv" />
+    </UserControl.Resources>
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Title Section -->
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <StackPanel>
+                <TextBlock Text="Security Findings Matrix" Style="{StaticResource TitleHeaderStyle}" />
+                <TextBlock Text="Categorized cryptographic vulnerabilities, protocol weaknesses, and evidence observations." Style="{StaticResource SubtitleHeaderStyle}" Margin="0,4,0,0" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Filter Bar -->
+        <Grid Grid.Row="1" Margin="0,0,0,16" Visibility="{Binding HasFindings, Converter={StaticResource BoolToVisConv}}">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Filter by Severity:" Foreground="{StaticResource BrushTextMuted}" FontSize="12" VerticalAlignment="Center" Margin="0,0,12,0" />
+
+                <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding FilterAllCommand}" Height="28" Padding="10,2" Margin="0,0,6,0">
+                    <TextBlock Text="All" FontSize="11.5" />
+                </Button>
+                <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding FilterCriticalCommand}" Height="28" Padding="10,2" Margin="0,0,6,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Critical" Foreground="#EF4444" FontWeight="Bold" FontSize="11.5" />
+                        <TextBlock Text="{Binding CriticalCount, StringFormat=' ({0})'}" Foreground="{StaticResource BrushTextMuted}" FontSize="11" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding FilterHighCommand}" Height="28" Padding="10,2" Margin="0,0,6,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="High" Foreground="#F97316" FontWeight="Bold" FontSize="11.5" />
+                        <TextBlock Text="{Binding HighCount, StringFormat=' ({0})'}" Foreground="{StaticResource BrushTextMuted}" FontSize="11" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding FilterMediumCommand}" Height="28" Padding="10,2" Margin="0,0,6,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Medium" Foreground="#F59E0B" FontWeight="Bold" FontSize="11.5" />
+                        <TextBlock Text="{Binding MediumCount, StringFormat=' ({0})'}" Foreground="{StaticResource BrushTextMuted}" FontSize="11" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding FilterLowCommand}" Height="28" Padding="10,2" Margin="0,0,6,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Low" Foreground="#3B82F6" FontWeight="Bold" FontSize="11.5" />
+                        <TextBlock Text="{Binding LowCount, StringFormat=' ({0})'}" Foreground="{StaticResource BrushTextMuted}" FontSize="11" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding FilterInfoCommand}" Height="28" Padding="10,2">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Info" Foreground="#6B7280" FontWeight="Bold" FontSize="11.5" />
+                        <TextBlock Text="{Binding InformationalCount, StringFormat=' ({0})'}" Foreground="{StaticResource BrushTextMuted}" FontSize="11" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Content Area (Empty State vs Findings Table + Inspector) -->
+        <Grid Grid.Row="2">
+
+            <!-- Empty State -->
+            <Border Style="{StaticResource SocCardBorderStyle}" Padding="40" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                    Visibility="{Binding HasFindings, Converter={StaticResource BoolToVisConv}, ConverterParameter=invert}">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="500">
+                    <Border Background="#1E293B" CornerRadius="36" Width="72" Height="72" HorizontalAlignment="Center" Margin="0,0,0,16">
+                        <Path Data="{StaticResource IconFindings}" Fill="{StaticResource BrushWarning}" Width="32" Height="32" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="No findings available." FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" HorizontalAlignment="Center" Margin="0,0,0,6" />
+                    <TextBlock Text="Load and analyze an IPsec PCAP file to detect cryptographic vulnerabilities, expired SAs, weak DH groups, and handshake flaws." 
+                               FontSize="13" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" LineHeight="20" />
+                </StackPanel>
+            </Border>
+
+            <!-- 2-Pane Active Findings Grid -->
+            <Grid Visibility="{Binding HasFindings, Converter={StaticResource BoolToVisConv}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.3*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: Findings DataGrid -->
+                <Border Grid.Column="0" Style="{StaticResource SocCardBorderStyle}" Padding="0" Margin="0,0,12,0">
+                    <DataGrid ItemsSource="{Binding Findings}" SelectedItem="{Binding SelectedFinding}"
+                              AutoGenerateColumns="False" IsReadOnly="True" MinRowHeight="36" SelectionMode="Single">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Rule ID" Binding="{Binding RuleId}" Width="110" />
+                            <DataGridTemplateColumn Header="Severity" Width="95">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="4" Padding="6,2" Background="{Binding Severity, Converter={StaticResource SevToBrushConv}}" HorizontalAlignment="Left">
+                                            <TextBlock Text="{Binding FormattedSeverity}" Foreground="#0F172A" FontWeight="Bold" FontSize="10.5" />
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Category" Binding="{Binding CategoryName}" Width="120" />
+                            <DataGridTextColumn Header="Title" Binding="{Binding Title}" Width="*" />
+                            <DataGridTextColumn Header="Risk Weight" Binding="{Binding FormattedRiskContribution}" Width="85" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+
+                <!-- Right: Evidence & Remediation Inspector -->
+                <Border Grid.Column="1" Style="{StaticResource SocCardBorderStyle}" Padding="20">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel DataContext="{Binding SelectedFinding}">
+                            <TextBlock Text="Finding Detail &amp; Evidence" FontSize="15" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,0,12" />
+
+                            <TextBlock Text="Rule ID:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,1" />
+                            <TextBlock Text="{Binding RuleId}" FontSize="13" Foreground="{StaticResource BrushAccentCyan}" FontWeight="SemiBold" Margin="0,0,0,8" />
+
+                            <TextBlock Text="Affected Parameter:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,1" />
+                            <TextBlock Text="{Binding AffectedParameter}" FontSize="12.5" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,0,8" />
+
+                            <TextBlock Text="Observed Value in Capture:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,1" />
+                            <TextBlock Text="{Binding ObservedValue}" FontSize="12.5" Foreground="{StaticResource BrushWarning}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,8" />
+
+                            <TextBlock Text="Expected / Standard Value:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,1" />
+                            <TextBlock Text="{Binding ExpectedValue}" FontSize="12.5" Foreground="{StaticResource BrushSuccess}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,8" />
+
+                            <TextBlock Text="Evidence Summary:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,1" />
+                            <TextBlock Text="{Binding Evidence}" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" TextWrapping="Wrap" LineHeight="17" Margin="0,0,0,8" />
+
+                            <TextBlock Text="Detailed Description:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,1" />
+                            <TextBlock Text="{Binding Description}" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" TextWrapping="Wrap" LineHeight="17" Margin="0,0,0,8" />
+
+                            <TextBlock Text="Actionable Recommendation:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,1" />
+                            <TextBlock Text="{Binding Recommendation}" FontSize="12" Foreground="{StaticResource BrushAccentCyan}" TextWrapping="Wrap" LineHeight="17" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+
+        </Grid>
+    </Grid>
+</UserControl>

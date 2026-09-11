@@ -1,0 +1,265 @@
+<UserControl x:Class="IPsecSecurityAnalyzer.Views.HistoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:conv="clr-namespace:IPsecSecurityAnalyzer.Utilities.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="850" d:DesignWidth="1200">
+
+    <UserControl.Resources>
+        <conv:BooleanToVisibilityConverter x:Key="BoolToVisConv" />
+        <conv:NullToVisibilityConverter x:Key="NullToVisConv" />
+        <conv:InverseBooleanConverter x:Key="InvBoolConv" />
+    </UserControl.Resources>
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Title Section -->
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <StackPanel>
+                <TextBlock Text="Analysis Audit History" Style="{StaticResource TitleHeaderStyle}" />
+                <TextBlock Text="Persistent SQLite audit history of all past PCAP analysis runs, security postures, and AI classifications." Style="{StaticResource SubtitleHeaderStyle}" />
+                <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource BrushAccentCyan}" FontSize="12" Margin="0,4,0,0"
+                           Visibility="{Binding StatusMessage, Converter={StaticResource NullToVisConv}}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding RefreshHistoryCommand}" Height="34" Margin="0,0,10,0">
+                    <TextBlock Text="↻ Refresh" VerticalAlignment="Center" />
+                </Button>
+                <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding ClearAllHistoryCommand}" Height="34" ToolTip="Purge all audit records from SQLite database">
+                    <TextBlock Text="Purge History" VerticalAlignment="Center" Foreground="#EF4444" />
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Search & Filter Controls -->
+        <Border Grid.Row="1" Style="{StaticResource SocCardBorderStyle}" Padding="16" Margin="0,0,0,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="180" />
+                    <ColumnDefinition Width="150" />
+                    <ColumnDefinition Width="150" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Search box -->
+                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                    <TextBlock Text="Search File or Analysis ID:" Foreground="{StaticResource BrushTextMuted}" FontSize="11" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                             Style="{StaticResource SocTextBoxStyle}" Height="32" Padding="8,4" />
+                </StackPanel>
+
+                <!-- Risk Filter -->
+                <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                    <TextBlock Text="Risk Level:" Foreground="{StaticResource BrushTextMuted}" FontSize="11" Margin="0,0,0,4" />
+                    <ComboBox ItemsSource="{Binding RiskFilterOptions}" SelectedItem="{Binding SelectedRiskFilter}" Height="32" />
+                </StackPanel>
+
+                <!-- IPsec Filter -->
+                <StackPanel Grid.Column="2" Margin="0,0,12,0">
+                    <TextBlock Text="IPsec Traffic:" Foreground="{StaticResource BrushTextMuted}" FontSize="11" Margin="0,0,0,4" />
+                    <ComboBox ItemsSource="{Binding IpsecFilterOptions}" SelectedItem="{Binding SelectedIpsecFilter}" Height="32" />
+                </StackPanel>
+
+                <!-- Anomaly Filter -->
+                <StackPanel Grid.Column="3" Margin="0,0,12,0">
+                    <TextBlock Text="Behavioral Pattern:" Foreground="{StaticResource BrushTextMuted}" FontSize="11" Margin="0,0,0,4" />
+                    <ComboBox ItemsSource="{Binding AnomalyFilterOptions}" SelectedItem="{Binding SelectedAnomalyFilter}" Height="32" />
+                </StackPanel>
+
+                <!-- Reset Button -->
+                <StackPanel Grid.Column="4" VerticalAlignment="Bottom">
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding ResetFilterCommand}" Height="32" Padding="12,0">
+                        <TextBlock Text="Reset Filters" VerticalAlignment="Center" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main Content (History Table vs Detail Inspector) -->
+        <Grid Grid.Row="2">
+            <!-- Empty State -->
+            <Border Style="{StaticResource SocCardBorderStyle}" Padding="40" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                    Visibility="{Binding HasHistory, Converter={StaticResource BoolToVisConv}, ConverterParameter=invert}">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="500">
+                    <Border Background="#1E293B" CornerRadius="36" Width="72" Height="72" HorizontalAlignment="Center" Margin="0,0,0,16">
+                        <Path Data="{StaticResource IconHistory}" Fill="{StaticResource BrushTextMuted}" Width="32" Height="32" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="{Binding EmptyStateText}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" HorizontalAlignment="Center" Margin="0,0,0,6" />
+                    <TextBlock Text="Completed IPsec protocol evaluations and compliance runs will be recorded to the local SQLite database." 
+                               FontSize="13" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" LineHeight="20" />
+                </StackPanel>
+            </Border>
+
+            <!-- Table & Details Split View -->
+            <Grid Visibility="{Binding HasHistory, Converter={StaticResource BoolToVisConv}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- History DataGrid -->
+                <DataGrid Grid.Column="0" ItemsSource="{Binding HistoryItems}" SelectedItem="{Binding SelectedHistoryItem}"
+                          MinRowHeight="38" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,0,8,0">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="Cursor" Value="Hand" />
+                            <EventSetter Event="MouseDoubleClick" Handler="OnRowDoubleClick" />
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Date" Binding="{Binding FormattedDate}" Width="135" />
+                        <DataGridTextColumn Header="PCAP File" Binding="{Binding FileName}" Width="*" />
+                        <DataGridTextColumn Header="IPsec" Binding="{Binding FormattedIpsecStatus}" Width="65" />
+                        <DataGridTextColumn Header="IKE" Binding="{Binding IkeVersion}" Width="75" />
+                        <DataGridTextColumn Header="Score" Binding="{Binding FormattedSecurityScore}" Width="75" />
+                        <DataGridTextColumn Header="Risk Level" Binding="{Binding FormattedRiskLevel}" Width="100" />
+                        <DataGridTextColumn Header="Findings" Binding="{Binding FindingCount}" Width="75" />
+                        <DataGridTextColumn Header="AI Classification" Binding="{Binding FormattedAiClassification}" Width="120" />
+                        <DataGridTextColumn Header="AI Conf" Binding="{Binding FormattedAiConfidence}" Width="75" />
+                        <DataGridTextColumn Header="Pattern" Binding="{Binding FormattedAnomalyStatus}" Width="120" />
+
+                        <!-- Row Actions -->
+                        <DataGridTemplateColumn Header="Actions" Width="265">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Button Content="Analyze" Command="{Binding DataContext.AnalyzeRecordCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                CommandParameter="{Binding}" Style="{StaticResource PrimaryButtonStyle}" Height="24" Padding="8,2" Margin="0,0,4,0" FontSize="11" ToolTip="Load and re-analyze this capture" />
+                                        <Button Content="View" Command="{Binding DataContext.ViewDetailsCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                CommandParameter="{Binding}" Style="{StaticResource SecondaryButtonStyle}" Height="24" Padding="6,2" Margin="0,0,4,0" FontSize="11" />
+                                        <Button Content="PDF" Command="{Binding DataContext.ExportPdfCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                CommandParameter="{Binding}" Style="{StaticResource SecondaryButtonStyle}" Height="24" Padding="6,2" Margin="0,0,4,0" FontSize="11" />
+                                        <Button Content="JSON" Command="{Binding DataContext.ExportJsonCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                CommandParameter="{Binding}" Style="{StaticResource SecondaryButtonStyle}" Height="24" Padding="6,2" Margin="0,0,4,0" FontSize="11" />
+                                        <Button Content="✕" Command="{Binding DataContext.DeleteRecordCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                CommandParameter="{Binding}" Style="{StaticResource SecondaryButtonStyle}" Height="24" Padding="6,2" Foreground="#EF4444" FontSize="11" ToolTip="Delete from history" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- Detailed Analysis Snapshot Inspector Panel -->
+                <Border Grid.Column="1" Style="{StaticResource SocCardBorderStyle}" Width="480" Padding="20" Margin="4,0,0,0"
+                        Visibility="{Binding HasSelectedDetail, Converter={StaticResource BoolToVisConv}}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Inspector Header -->
+                        <Grid Grid.Row="0" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="Saved Analysis Snapshot" Style="{StaticResource CardHeaderStyle}" />
+                                <TextBlock Text="{Binding SelectedDetailSnapshot.FileName}" Foreground="{StaticResource BrushAccentCyan}" FontSize="13" FontWeight="SemiBold" Margin="0,2,0,0" />
+                                <TextBlock Text="{Binding SelectedDetailSnapshot.FormattedTimestamp, StringFormat='{}Analyzed on {0}'}" Foreground="{StaticResource BrushTextMuted}" FontSize="11" />
+                            </StackPanel>
+                            <Button HorizontalAlignment="Right" VerticalAlignment="Top" Content="✕" Command="{Binding CloseDetailsCommand}" 
+                                    Style="{StaticResource SecondaryButtonStyle}" Height="24" Width="24" Padding="0" ToolTip="Close inspector" />
+                        </Grid>
+
+                        <!-- Snapshot Content Body -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <!-- Score Badge Banner -->
+                                <Border Background="#1E293B" CornerRadius="6" Padding="12" Margin="0,0,0,16">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="Security Score" Foreground="{StaticResource BrushTextMuted}" FontSize="11" />
+                                            <TextBlock Text="{Binding SelectedDetailSnapshot.FormattedRiskScore}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" />
+                                            <TextBlock Text="{Binding SelectedDetailSnapshot.FormattedRiskLevel, StringFormat='{}Risk: {0}'}" Foreground="{StaticResource BrushWarning}" FontSize="12" FontWeight="SemiBold" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="Assessment Coverage" Foreground="{StaticResource BrushTextMuted}" FontSize="11" />
+                                            <TextBlock Text="{Binding SelectedDetailSnapshot.FormattedCoverage}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushAccentCyan}" />
+                                            <TextBlock Text="{Binding SelectedDetailSnapshot.Findings.Count, StringFormat='{}{0} Active Findings'}" Foreground="{StaticResource BrushTextMuted}" FontSize="12" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <!-- AI Classification Card -->
+                                <TextBlock Text="AI-Inferred Analysis" Style="{StaticResource CardHeaderStyle}" FontSize="13" Margin="0,0,0,6" />
+                                <Border Background="#0A0E1A" CornerRadius="6" Padding="12" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,4">
+                                            <TextBlock Text="AI-Inferred Traffic Type:" Foreground="{StaticResource BrushTextMuted}" FontSize="11.5" />
+                                            <TextBlock Text="{Binding SelectedDetailSnapshot.AiTrafficType, TargetNullValue='AI analysis not available'}" 
+                                                       HorizontalAlignment="Right" Foreground="{StaticResource BrushTextPrimary}" FontWeight="SemiBold" FontSize="11.5" />
+                                        </Grid>
+                                        <Grid Margin="0,0,0,4">
+                                            <TextBlock Text="AI Confidence:" Foreground="{StaticResource BrushTextMuted}" FontSize="11.5" />
+                                            <TextBlock Text="{Binding SelectedDetailSnapshot.AiConfidence, StringFormat='{}{0:P1}', TargetNullValue='N/A'}" 
+                                                       HorizontalAlignment="Right" Foreground="{StaticResource BrushTextPrimary}" FontSize="11.5" />
+                                        </Grid>
+                                        <Grid Margin="0,0,0,4">
+                                            <TextBlock Text="Behavioral Anomaly:" Foreground="{StaticResource BrushTextMuted}" FontSize="11.5" />
+                                            <TextBlock Text="{Binding SelectedDetailSnapshot.AiPrediction, TargetNullValue='Normal'}" 
+                                                       HorizontalAlignment="Right" Foreground="{StaticResource BrushTextPrimary}" FontSize="11.5" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Dissected Parameters Card -->
+                                <TextBlock Text="Observed IPsec Parameters" Style="{StaticResource CardHeaderStyle}" FontSize="13" Margin="0,0,0,6" />
+                                <Border Background="#0A0E1A" CornerRadius="6" Padding="12" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,4">
+                                            <TextBlock Text="IKE Version:" Foreground="{StaticResource BrushTextMuted}" FontSize="11.5" />
+                                            <TextBlock Text="{Binding SelectedDetailSnapshot.IkeVersion, TargetNullValue='Unknown'}" HorizontalAlignment="Right" Foreground="{StaticResource BrushTextPrimary}" FontSize="11.5" />
+                                        </Grid>
+                                        <Grid Margin="0,0,0,4">
+                                            <TextBlock Text="Encryption:" Foreground="{StaticResource BrushTextMuted}" FontSize="11.5" />
+                                            <TextBlock Text="{Binding SelectedDetailSnapshot.EncryptionAlgorithm, TargetNullValue='Not clear'}" HorizontalAlignment="Right" Foreground="{StaticResource BrushTextPrimary}" FontSize="11.5" />
+                                        </Grid>
+                                        <Grid Margin="0,0,0,4">
+                                            <TextBlock Text="Integrity:" Foreground="{StaticResource BrushTextMuted}" FontSize="11.5" />
+                                            <TextBlock Text="{Binding SelectedDetailSnapshot.IntegrityAlgorithm, TargetNullValue='Not clear'}" HorizontalAlignment="Right" Foreground="{StaticResource BrushTextPrimary}" FontSize="11.5" />
+                                        </Grid>
+                                        <Grid Margin="0,0,0,4">
+                                            <TextBlock Text="Diffie-Hellman Group:" Foreground="{StaticResource BrushTextMuted}" FontSize="11.5" />
+                                            <TextBlock Text="{Binding SelectedDetailSnapshot.DhGroup, TargetNullValue='Not observed'}" HorizontalAlignment="Right" Foreground="{StaticResource BrushTextPrimary}" FontSize="11.5" />
+                                        </Grid>
+                                        <Grid Margin="0,0,0,4">
+                                            <TextBlock Text="Operating Mode:" Foreground="{StaticResource BrushTextMuted}" FontSize="11.5" />
+                                            <TextBlock Text="{Binding SelectedDetailSnapshot.IpsecMode, TargetNullValue='Unknown'}" HorizontalAlignment="Right" Foreground="{StaticResource BrushTextPrimary}" FontSize="11.5" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Actions from Inspector -->
+                                <StackPanel Margin="0,8,0,0">
+                                    <Button Content="Analyze Capture on Dashboard" Command="{Binding AnalyzeRecordCommand}" CommandParameter="{Binding SelectedHistoryItem}"
+                                            Style="{StaticResource PrimaryButtonStyle}" Height="34" Margin="0,0,0,8" ToolTip="Load this capture into analyzer and switch to Dashboard" />
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Button Grid.Column="0" Content="Export PDF Report" Command="{Binding ExportPdfCommand}" CommandParameter="{Binding SelectedHistoryItem}"
+                                                Style="{StaticResource SecondaryButtonStyle}" Height="34" Margin="0,0,4,0" />
+                                        <Button Grid.Column="1" Content="Export JSON Audit" Command="{Binding ExportJsonCommand}" CommandParameter="{Binding SelectedHistoryItem}"
+                                                Style="{StaticResource SecondaryButtonStyle}" Height="34" Margin="4,0,0,0" />
+                                    </Grid>
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -1,0 +1,79 @@
+{
+  "model_name": "Random Forest Classifier (scikit-learn)",
+  "model_version": "1.0.0",
+  "dataset_version": "VPNGuard-Testbed-Dataset-v1",
+  "classes": [
+    "File transfer",
+    "ICMP/ping",
+    "Messaging",
+    "Tunnel keep-alive",
+    "Video streaming",
+    "VoIP",
+    "Web browsing"
+  ],
+  "feature_names": [
+    "packet_count",
+    "total_bytes",
+    "duration_seconds",
+    "avg_packet_size",
+    "min_packet_size",
+    "max_packet_size",
+    "packet_size_std",
+    "avg_inter_arrival_time",
+    "inter_arrival_time_std",
+    "packets_per_second",
+    "bytes_per_second",
+    "forward_packet_count",
+    "reverse_packet_count",
+    "forward_reverse_ratio",
+    "burst_count",
+    "avg_burst_size",
+    "esp_packet_count",
+    "ike_packet_count",
+    "ah_packet_count",
+    "tcp_packet_count",
+    "udp_packet_count",
+    "unique_endpoints_count",
+    "unique_spi_count"
+  ],
+  "test_samples": 290,
+  "accuracy": 1.0,
+  "macro_f1": 1.0,
+  "weighted_f1": 1.0,
+  "top_features": [
+    {
+      "feature": "min_packet_size",
+      "importance": 0.1398
+    },
+    {
+      "feature": "packet_size_std",
+      "importance": 0.1039
+    },
+    {
+      "feature": "unique_endpoints_count",
+      "importance": 0.0943
+    },
+    {
+      "feature": "max_packet_size",
+      "importance": 0.0818
+    },
+    {
+      "feature": "forward_reverse_ratio",
+      "importance": 0.0722
+    },
+    {
+      "feature": "inter_arrival_time_std",
+      "importance": 0.0702
+    },
+    {
+      "feature": "udp_packet_count",
+      "importance": 0.0476
+    },
+    {
+      "feature": "unique_spi_count",
+      "importance": 0.0456
+    }
+  ],
+  "anomaly_model_name": "Isolation Forest (scikit-learn)",
+  "anomaly_contamination": 0.08
+}

@@ -1,0 +1,313 @@
+<Window x:Class="IPsecSecurityAnalyzer.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:IPsecSecurityAnalyzer.ViewModels"
+        xmlns:views="clr-namespace:IPsecSecurityAnalyzer.Views"
+        xmlns:models="clr-namespace:IPsecSecurityAnalyzer.Models"
+        xmlns:conv="clr-namespace:IPsecSecurityAnalyzer.Utilities.Converters"
+        mc:Ignorable="d"
+        Title="IPsec Security Analyzer" 
+        Height="820" Width="1280"
+        MinHeight="680" MinWidth="1040"
+        Background="{StaticResource BrushBgApp}"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <conv:ActivePageToBrushConverter x:Key="ActiveBgConv" />
+        <conv:ActivePageToIndicatorBrushConverter x:Key="ActiveIndConv" />
+        <BooleanToVisibilityConverter x:Key="BoolToVisConv" />
+
+        <!-- ViewModel to View DataTemplates -->
+        <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
+            <views:DashboardView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:PcapAnalysisViewModel}">
+            <views:PcapAnalysisView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:LiveCaptureViewModel}">
+            <views:LiveCaptureView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:IpsecAnalysisViewModel}">
+            <views:IpsecAnalysisView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:AiAnalysisViewModel}">
+            <views:AiAnalysisView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SecurityAssessmentViewModel}">
+            <views:SecurityAssessmentView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:FindingsViewModel}">
+            <views:FindingsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:RecommendationsViewModel}">
+            <views:RecommendationsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ReportsViewModel}">
+            <views:ReportsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:HistoryViewModel}">
+            <views:HistoryView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+            <views:SettingsView />
+        </DataTemplate>
+
+        <!-- Sidebar Navigation Button Style -->
+        <Style x:Key="NavButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource BrushTextSecondary}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Height" Value="38" />
+            <Setter Property="Margin" Value="8,2" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="12,0">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#1E293B" />
+                                <Setter Property="Foreground" Value="{StaticResource BrushTextPrimary}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <!-- Left Sidebar Navigation -->
+            <ColumnDefinition Width="250" />
+            <!-- Main Content Area -->
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <Border Grid.Column="0" Background="{StaticResource BrushBgSidebar}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,1,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <!-- App Branding Header -->
+                    <RowDefinition Height="Auto" />
+                    <!-- Navigation Menu Items -->
+                    <RowDefinition Height="*" />
+                    <!-- Footer Status -->
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- 1. Header Branding -->
+                <Border Grid.Row="0" Padding="18,18,18,16" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Background="#11223A" CornerRadius="8" Width="36" Height="36" Margin="0,0,12,0">
+                            <Path Data="{StaticResource IconShieldLock}" Fill="{StaticResource BrushAccentCyan}" Width="20" Height="20" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="IPsec Analyzer" Foreground="{StaticResource BrushTextPrimary}" FontSize="15" FontWeight="Bold" />
+                            <TextBlock Text="SIH26160 • SOC Platform" Foreground="{StaticResource BrushTextMuted}" FontSize="11" FontWeight="Medium" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- 2. Sidebar Navigation Items (Scrollable) -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,8">
+                    <StackPanel>
+
+                        <!-- DASHBOARD -->
+                        <Button Style="{StaticResource NavButtonStyle}" 
+                                Command="{Binding NavigateCommand}" 
+                                CommandParameter="{x:Static models:NavigationPage.Dashboard}"
+                                Background="{Binding CurrentPage, Converter={StaticResource ActiveBgConv}, ConverterParameter=Dashboard}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconDashboard}" Fill="{StaticResource BrushAccentCyan}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0" />
+                                <TextBlock Text="Dashboard" FontWeight="SemiBold" FontSize="13" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- ANALYSIS SECTION -->
+                        <TextBlock Text="ANALYSIS" Style="{StaticResource SidebarSectionHeaderStyle}" />
+
+                        <Button Style="{StaticResource NavButtonStyle}" 
+                                Command="{Binding NavigateCommand}" 
+                                CommandParameter="{x:Static models:NavigationPage.PcapAnalysis}"
+                                Background="{Binding CurrentPage, Converter={StaticResource ActiveBgConv}, ConverterParameter=PcapAnalysis}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconPcap}" Fill="{StaticResource BrushAccentBlue}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0" />
+                                <TextBlock Text="PCAP Analysis" FontSize="13" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource NavButtonStyle}" 
+                                Command="{Binding NavigateCommand}" 
+                                CommandParameter="{x:Static models:NavigationPage.LiveCapture}"
+                                Background="{Binding CurrentPage, Converter={StaticResource ActiveBgConv}, ConverterParameter=LiveCapture}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconLiveCapture}" Fill="{StaticResource BrushSuccess}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0" />
+                                <TextBlock Text="Live Capture" FontSize="13" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource NavButtonStyle}" 
+                                Command="{Binding NavigateCommand}" 
+                                CommandParameter="{x:Static models:NavigationPage.IpsecAnalysis}"
+                                Background="{Binding CurrentPage, Converter={StaticResource ActiveBgConv}, ConverterParameter=IpsecAnalysis}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconIpsec}" Fill="{StaticResource BrushAccentCyan}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0" />
+                                <TextBlock Text="IPsec Analysis" FontSize="13" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource NavButtonStyle}" 
+                                Command="{Binding NavigateCommand}" 
+                                CommandParameter="{x:Static models:NavigationPage.AiAnalysis}"
+                                Background="{Binding CurrentPage, Converter={StaticResource ActiveBgConv}, ConverterParameter=AiAnalysis}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconAi}" Fill="#A855F7" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0" />
+                                <TextBlock Text="AI Analysis" FontSize="13" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- SECURITY SECTION -->
+                        <TextBlock Text="SECURITY" Style="{StaticResource SidebarSectionHeaderStyle}" />
+
+                        <Button Style="{StaticResource NavButtonStyle}" 
+                                Command="{Binding NavigateCommand}" 
+                                CommandParameter="{x:Static models:NavigationPage.SecurityAssessment}"
+                                Background="{Binding CurrentPage, Converter={StaticResource ActiveBgConv}, ConverterParameter=SecurityAssessment}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconSecurityAssessment}" Fill="{StaticResource BrushSuccess}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0" />
+                                <TextBlock Text="Security Assessment" FontSize="13" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource NavButtonStyle}" 
+                                Command="{Binding NavigateCommand}" 
+                                CommandParameter="{x:Static models:NavigationPage.Findings}"
+                                Background="{Binding CurrentPage, Converter={StaticResource ActiveBgConv}, ConverterParameter=Findings}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconFindings}" Fill="{StaticResource BrushWarning}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0" />
+                                <TextBlock Text="Findings" FontSize="13" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource NavButtonStyle}" 
+                                Command="{Binding NavigateCommand}" 
+                                CommandParameter="{x:Static models:NavigationPage.Recommendations}"
+                                Background="{Binding CurrentPage, Converter={StaticResource ActiveBgConv}, ConverterParameter=Recommendations}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconRecommendations}" Fill="{StaticResource BrushAccentCyan}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0" />
+                                <TextBlock Text="Recommendations" FontSize="13" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- REPORTING SECTION -->
+                        <TextBlock Text="REPORTING" Style="{StaticResource SidebarSectionHeaderStyle}" />
+
+                        <Button Style="{StaticResource NavButtonStyle}" 
+                                Command="{Binding NavigateCommand}" 
+                                CommandParameter="{x:Static models:NavigationPage.Reports}"
+                                Background="{Binding CurrentPage, Converter={StaticResource ActiveBgConv}, ConverterParameter=Reports}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconReports}" Fill="{StaticResource BrushTextSecondary}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0" />
+                                <TextBlock Text="Reports" FontSize="13" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource NavButtonStyle}" 
+                                Command="{Binding NavigateCommand}" 
+                                CommandParameter="{x:Static models:NavigationPage.History}"
+                                Background="{Binding CurrentPage, Converter={StaticResource ActiveBgConv}, ConverterParameter=History}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconHistory}" Fill="{StaticResource BrushTextSecondary}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0" />
+                                <TextBlock Text="History" FontSize="13" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- SYSTEM SECTION -->
+                        <TextBlock Text="SYSTEM" Style="{StaticResource SidebarSectionHeaderStyle}" />
+
+                        <Button Style="{StaticResource NavButtonStyle}" 
+                                Command="{Binding NavigateCommand}" 
+                                CommandParameter="{x:Static models:NavigationPage.Settings}"
+                                Background="{Binding CurrentPage, Converter={StaticResource ActiveBgConv}, ConverterParameter=Settings}">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconSettings}" Fill="{StaticResource BrushTextSecondary}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,12,0" />
+                                <TextBlock Text="Settings" FontSize="13" />
+                            </StackPanel>
+                        </Button>
+
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- 3. Bottom Status Area -->
+                <Border Grid.Row="2" Padding="16,12" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,1,0,0" Background="#0C1322">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="System Status" Foreground="{StaticResource BrushTextMuted}" FontSize="11.5" Margin="0,0,6,0" />
+                            <TextBlock Text="{Binding SystemStatus}" Foreground="{StaticResource BrushSuccess}" FontWeight="Bold" FontSize="11.5" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding AppVersion}" Foreground="{StaticResource BrushTextMuted}" FontSize="10.5" Margin="0,2,0,0" />
+                    </StackPanel>
+                </Border>
+
+            </Grid>
+        </Border>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <!-- Top Navigation & Context Bar -->
+                <RowDefinition Height="Auto" />
+                <!-- Active Page Content -->
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Top Header Bar -->
+            <Border Grid.Row="0" Background="{StaticResource BrushBgSidebar}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="0,0,0,1" Padding="24,14">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding CurrentPageTitle}" Foreground="{StaticResource BrushTextPrimary}" FontSize="18" FontWeight="Bold" />
+                        <TextBlock Text="{Binding CurrentPageSubtitle}" Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,2,0,0" />
+                    </StackPanel>
+
+                    <!-- Active Capture Badge & SIH Tag -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- PCAP Loaded Status Badge -->
+                        <Border Background="{StaticResource BrushBgInput}" BorderBrush="{StaticResource BrushBorderAccent}" BorderThickness="1" CornerRadius="6" Padding="12,6" Margin="0,0,10,0">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconPcap}" Fill="{StaticResource BrushAccentCyan}" Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                <TextBlock Text="{Binding ActivePcapName}" Foreground="{StaticResource BrushTextSecondary}" FontSize="11.5" FontWeight="Medium" MaxWidth="220" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Hackathon Badge -->
+                        <Border Background="#10233D" BorderBrush="{StaticResource BrushAccentCyan}" BorderThickness="1" CornerRadius="6" Padding="10,6">
+                            <TextBlock Text="SIH26160" Foreground="{StaticResource BrushAccentCyan}" FontSize="11.5" FontWeight="Bold" />
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Dynamic Page Content Control -->
+            <ContentControl Grid.Row="1" Content="{Binding CurrentViewModel}" />
+
+        </Grid>
+    </Grid>
+</Window>

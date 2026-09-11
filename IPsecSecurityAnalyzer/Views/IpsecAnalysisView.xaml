@@ -1,0 +1,327 @@
+﻿<UserControl x:Class="IPsecSecurityAnalyzer.Views.IpsecAnalysisView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="1200" d:DesignWidth="1100">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="24">
+        <StackPanel MaxWidth="1200" HorizontalAlignment="Stretch">
+
+            <!-- Title Header -->
+            <TextBlock Text="IPsec Protocol &amp; Handshake Analysis" Style="{StaticResource TitleHeaderStyle}" />
+            <TextBlock Text="Phase 3 deep dissection: IKEv1/v2 Security Association proposals, Diffie-Hellman exchanges, Nonces, and ESP SPI sequence tracking." Style="{StaticResource SubtitleHeaderStyle}" Margin="0,4,0,20" />
+
+            <!-- IKE Information Section -->
+            <Border Style="{StaticResource SocCardBorderStyle}" Margin="0,0,0,20">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <TextBlock Text="IKE Information (Internet Key Exchange)" Style="{StaticResource CardHeaderStyle}" />
+                        <Path Data="{StaticResource IconIpsec}" Fill="{StaticResource BrushAccentCyan}" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Right" />
+                    </Grid>
+
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="220" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- IKE Version -->
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="IKE Version" Foreground="{StaticResource BrushTextMuted}" FontSize="13" Margin="0,6" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding AnalysisResult.DisplayIkeVersion}" Foreground="{StaticResource BrushAccentCyan}" FontSize="13" FontWeight="SemiBold" Margin="0,6" />
+
+                        <!-- IKE Packets -->
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="IKE Packet Count" Foreground="{StaticResource BrushTextMuted}" FontSize="13" Margin="0,6" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding AnalysisResult.DisplayIkePackets}" Foreground="{StaticResource BrushTextPrimary}" FontSize="13" Margin="0,6" />
+
+                        <!-- Exchange Type -->
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Exchange Type" Foreground="{StaticResource BrushTextMuted}" FontSize="13" Margin="0,6" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding AnalysisResult.DisplayExchangeType}" Foreground="{StaticResource BrushTextPrimary}" FontSize="13" Margin="0,6" />
+
+                        <!-- Authentication Method -->
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Authentication" Foreground="{StaticResource BrushTextMuted}" FontSize="13" Margin="0,6" />
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding AnalysisResult.DisplayAuthMethod}" Foreground="{StaticResource BrushTextPrimary}" FontSize="13" Margin="0,6" />
+
+                        <!-- Encryption Suite -->
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Encryption Algorithm" Foreground="{StaticResource BrushTextMuted}" FontSize="13" Margin="0,6" />
+                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding AnalysisResult.DisplayEncryption}" Foreground="{StaticResource BrushTextPrimary}" FontSize="13" Margin="0,6" />
+
+                        <!-- DH Group -->
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Diffie-Hellman Group" Foreground="{StaticResource BrushTextMuted}" FontSize="13" Margin="0,6" />
+                        <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding AnalysisResult.DisplayDhGroup}" Foreground="{StaticResource BrushTextPrimary}" FontSize="13" Margin="0,6" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Phase 3: Observed SA Proposals DataGrid -->
+            <Border Style="{StaticResource SocCardBorderStyle}" Margin="0,0,0,20">
+                <StackPanel>
+                    <Grid Margin="0,0,0,14">
+                        <TextBlock Text="Observed IKE SA Proposals &amp; Cryptographic Transforms" Style="{StaticResource CardHeaderStyle}" />
+                        <Path Data="{StaticResource IconShield}" Fill="{StaticResource BrushAccentBlue}" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Right" />
+                    </Grid>
+
+                    <DataGrid ItemsSource="{Binding AnalysisResult.SaProposals}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              CanUserAddRows="False"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Disabled"
+                              MaxHeight="260"
+                              Background="Transparent"
+                              RowBackground="Transparent"
+                              BorderThickness="0">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="#" Binding="{Binding ProposalNumber}" Width="45" />
+                            <DataGridTextColumn Header="Protocol" Binding="{Binding Protocol}" Width="70" />
+                            <DataGridTextColumn Header="Encryption" Binding="{Binding EncryptionAlgorithm}" Width="170" />
+                            <DataGridTextColumn Header="Integrity / Hash" Binding="{Binding IntegrityAlgorithm}" Width="160" />
+                            <DataGridTextColumn Header="Diffie-Hellman" Binding="{Binding DhGroup}" Width="210" />
+                            <DataGridTextColumn Header="Auth Method" Binding="{Binding AuthenticationMethod}" Width="160" />
+                            <DataGridTextColumn Header="Key Len" Binding="{Binding KeyLength}" Width="85" />
+                            <DataGridTextColumn Header="Lifetime" Binding="{Binding LifeDuration}" Width="130" />
+                            <DataGridTextColumn Header="Security Posture" Binding="{Binding SecurityRating}" Width="140" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <TextBlock Text="No IKE SA proposals observed in the capture stream." 
+                               Foreground="{StaticResource BrushTextMuted}"
+                               FontStyle="Italic"
+                               Margin="0,10,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding AnalysisResult.HasSaProposals}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <!-- Phase 3: IKE Handshake & Exchange Timeline -->
+            <Border Style="{StaticResource SocCardBorderStyle}" Margin="0,0,0,20">
+                <StackPanel>
+                    <Grid Margin="0,0,0,14">
+                        <TextBlock Text="IKE Handshake &amp; Exchange Messages (Dissected Timeline)" Style="{StaticResource CardHeaderStyle}" />
+                        <Path Data="{StaticResource IconIpsec}" Fill="{StaticResource BrushAccentCyan}" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Right" />
+                    </Grid>
+
+                    <DataGrid ItemsSource="{Binding AnalysisResult.Handshakes}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              CanUserAddRows="False"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Disabled"
+                              MaxHeight="280"
+                              Background="Transparent"
+                              RowBackground="Transparent"
+                              BorderThickness="0">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Frame" Binding="{Binding PacketNumber}" Width="60" />
+                            <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp}" Width="140" />
+                            <DataGridTextColumn Header="Version" Binding="{Binding Version}" Width="70" />
+                            <DataGridTextColumn Header="Exchange Type" Binding="{Binding ExchangeType}" Width="180" />
+                            <DataGridTextColumn Header="Msg ID" Binding="{Binding MessageId}" Width="65" />
+                            <DataGridTextColumn Header="Payloads" Binding="{Binding PayloadsSummary}" Width="180" />
+                            <DataGridTextColumn Header="DH Group" Binding="{Binding DhGroup}" Width="180" />
+                            <DataGridTextColumn Header="Role" Binding="{Binding Role}" Width="140" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <TextBlock Text="No IKE handshake exchange frames detected in the capture." 
+                               Foreground="{StaticResource BrushTextMuted}"
+                               FontStyle="Italic"
+                               Margin="0,10,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding AnalysisResult.HasHandshakes}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <!-- IPsec / ESP Information Section -->
+            <Border Style="{StaticResource SocCardBorderStyle}" Margin="0,0,0,20">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <TextBlock Text="IPsec / ESP Information (Encapsulating Security Payload)" Style="{StaticResource CardHeaderStyle}" />
+                        <Path Data="{StaticResource IconLock}" Fill="{StaticResource BrushAccentBlue}" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Right" />
+                    </Grid>
+
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="220" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Protocol -->
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Protocol" Foreground="{StaticResource BrushTextMuted}" FontSize="13" Margin="0,6" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding AnalysisResult.DisplayProtocol}" Foreground="{StaticResource BrushTextPrimary}" FontSize="13" Margin="0,6" />
+
+                        <!-- ESP Packet Count -->
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="ESP Packet Count" Foreground="{StaticResource BrushTextMuted}" FontSize="13" Margin="0,6" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding AnalysisResult.DisplayEspPackets}" Foreground="{StaticResource BrushSuccess}" FontWeight="SemiBold" FontSize="13" Margin="0,6" />
+
+                        <!-- AH Packet Count -->
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="AH Packet Count" Foreground="{StaticResource BrushTextMuted}" FontSize="13" Margin="0,6" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding AnalysisResult.DisplayAhPackets}" Foreground="{StaticResource BrushWarning}" FontWeight="SemiBold" FontSize="13" Margin="0,6" />
+
+                        <!-- Mode -->
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Mode" Foreground="{StaticResource BrushTextMuted}" FontSize="13" Margin="0,6" />
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding AnalysisResult.DisplayIpsecMode}" Foreground="{StaticResource BrushTextPrimary}" FontSize="13" Margin="0,6" />
+
+                        <!-- Encryption Algorithm -->
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Encryption" Foreground="{StaticResource BrushTextMuted}" FontSize="13" Margin="0,6" />
+                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding AnalysisResult.DisplayEncryption}" Foreground="{StaticResource BrushTextPrimary}" FontSize="13" Margin="0,6" />
+
+                        <!-- Integrity Algorithm -->
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Integrity" Foreground="{StaticResource BrushTextMuted}" FontSize="13" Margin="0,6" />
+                        <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding AnalysisResult.DisplayIntegrity}" Foreground="{StaticResource BrushTextPrimary}" FontSize="13" Margin="0,6" />
+
+                        <!-- SPI -->
+                        <TextBlock Grid.Row="6" Grid.Column="0" Text="Observed SPI" Foreground="{StaticResource BrushTextMuted}" FontSize="13" Margin="0,6" />
+                        <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding AnalysisResult.DisplaySpi}" Foreground="{StaticResource BrushAccentCyan}" FontWeight="SemiBold" FontSize="13" Margin="0,6" />
+
+                        <!-- Lifetime -->
+                        <TextBlock Grid.Row="7" Grid.Column="0" Text="Lifetime" Foreground="{StaticResource BrushTextMuted}" FontSize="13" Margin="0,6" />
+                        <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding AnalysisResult.DisplayKeyLifetime}" Foreground="{StaticResource BrushTextPrimary}" FontSize="13" Margin="0,6" />
+
+                        <!-- PFS -->
+                        <TextBlock Grid.Row="8" Grid.Column="0" Text="PFS (Perfect Forward Secrecy)" Foreground="{StaticResource BrushTextMuted}" FontSize="13" Margin="0,6" />
+                        <TextBlock Grid.Row="8" Grid.Column="1" Text="{Binding AnalysisResult.DisplayPfs}" Foreground="{StaticResource BrushTextPrimary}" FontSize="13" Margin="0,6" />
+
+                        <!-- Replay Protection -->
+                        <TextBlock Grid.Row="9" Grid.Column="0" Text="Replay Protection" Foreground="{StaticResource BrushTextMuted}" FontSize="13" Margin="0,6" />
+                        <TextBlock Grid.Row="9" Grid.Column="1" Text="{Binding AnalysisResult.DisplayReplayProtection}" Foreground="{StaticResource BrushTextPrimary}" FontSize="13" Margin="0,6" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Phase 3: Active ESP Security Sessions & Sequence Tracking -->
+            <Border Style="{StaticResource SocCardBorderStyle}" Margin="0,0,0,20">
+                <StackPanel>
+                    <Grid Margin="0,0,0,14">
+                        <TextBlock Text="Active ESP Sessions &amp; SPI Sequence Tracking" Style="{StaticResource CardHeaderStyle}" />
+                        <Path Data="{StaticResource IconLock}" Fill="{StaticResource BrushAccentCyan}" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Right" />
+                    </Grid>
+
+                    <DataGrid ItemsSource="{Binding AnalysisResult.EspSessions}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              CanUserAddRows="False"
+                              HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Disabled"
+                              MaxHeight="240"
+                              Background="Transparent"
+                              RowBackground="Transparent"
+                              BorderThickness="0">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="SPI" Binding="{Binding Spi}" Width="130" />
+                            <DataGridTextColumn Header="Source Endpoint" Binding="{Binding Source}" Width="140" />
+                            <DataGridTextColumn Header="Destination Endpoint" Binding="{Binding Destination}" Width="140" />
+                            <DataGridTextColumn Header="Packets" Binding="{Binding PacketCount}" Width="80" />
+                            <DataGridTextColumn Header="Volume" Binding="{Binding FormattedBytes}" Width="90" />
+                            <DataGridTextColumn Header="Start Seq" Binding="{Binding FirstSequence}" Width="90" />
+                            <DataGridTextColumn Header="End Seq" Binding="{Binding LastSequence}" Width="90" />
+                            <DataGridTextColumn Header="Sequence Integrity / Replay Status" Binding="{Binding ReplayStatus}" Width="200" />
+                            <DataGridTextColumn Header="Mode" Binding="{Binding Mode}" Width="110" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <TextBlock Text="No active ESP sessions or SPI streams detected." 
+                               Foreground="{StaticResource BrushTextMuted}"
+                               FontStyle="Italic"
+                               Margin="0,10,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding AnalysisResult.HasEspSessions}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <!-- Traffic Information Section -->
+            <Border Style="{StaticResource SocCardBorderStyle}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <TextBlock Text="Traffic Information" Style="{StaticResource CardHeaderStyle}" />
+                        <Path Data="{StaticResource IconPcap}" Fill="{StaticResource BrushAccentCyan}" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Right" />
+                    </Grid>
+
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="220" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Source -->
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Source Endpoints" Foreground="{StaticResource BrushTextMuted}" FontSize="13" Margin="0,6" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding AnalysisResult.DisplaySourceAddress}" Foreground="{StaticResource BrushTextPrimary}" FontSize="13" Margin="0,6" />
+
+                        <!-- Destination -->
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Destination Endpoints" Foreground="{StaticResource BrushTextMuted}" FontSize="13" Margin="0,6" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding AnalysisResult.DisplayDestAddress}" Foreground="{StaticResource BrushTextPrimary}" FontSize="13" Margin="0,6" />
+
+                        <!-- Packet Count -->
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="IPsec Packet Count" Foreground="{StaticResource BrushTextMuted}" FontSize="13" Margin="0,6" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding AnalysisResult.DisplayPacketCount}" Foreground="{StaticResource BrushTextPrimary}" FontWeight="SemiBold" FontSize="13" Margin="0,6" />
+
+                        <!-- Traffic Type -->
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Traffic Type" Foreground="{StaticResource BrushTextMuted}" FontSize="13" Margin="0,6" />
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding AnalysisResult.DisplayTrafficType}" Foreground="{StaticResource BrushTextPrimary}" FontSize="13" Margin="0,6" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

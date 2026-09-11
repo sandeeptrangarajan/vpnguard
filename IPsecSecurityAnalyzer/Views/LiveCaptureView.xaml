@@ -1,0 +1,91 @@
+<UserControl x:Class="IPsecSecurityAnalyzer.Views.LiveCaptureView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1000">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="24">
+        <StackPanel MaxWidth="1200" HorizontalAlignment="Stretch">
+
+            <!-- Title -->
+            <TextBlock Text="Live Capture" Style="{StaticResource TitleHeaderStyle}" />
+            <TextBlock Text="Capture live network interface frames for real-time IPsec VPN tunnel monitoring." Style="{StaticResource SubtitleHeaderStyle}" Margin="0,4,0,20" />
+
+            <!-- Capture Controls Card -->
+            <Border Style="{StaticResource SocCardBorderStyle}" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="Live Interface Capture Configuration" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,16" />
+
+                    <Grid Margin="0,0,0,16">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="200" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Network Interface Selection -->
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Network Interface:" Foreground="{StaticResource BrushTextMuted}" FontSize="13" VerticalAlignment="Center" Margin="0,8" />
+                        <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding AvailableInterfaces}" SelectedItem="{Binding SelectedInterface}" 
+                                  Height="36" Margin="0,8" ToolTip="Select a local or virtual network interface for live capture" />
+
+                        <!-- Capture Duration -->
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Capture Duration (seconds):" Foreground="{StaticResource BrushTextMuted}" FontSize="13" VerticalAlignment="Center" Margin="0,8" />
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding CaptureDuration, UpdateSourceTrigger=PropertyChanged}" 
+                                 Style="{StaticResource SocTextBoxStyle}" Height="34" Width="200" HorizontalAlignment="Left" Margin="0,8" MaxLength="6" />
+                    </Grid>
+
+                    <!-- Action Buttons -->
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Style="{StaticResource PrimaryButtonStyle}" Command="{Binding StartCaptureCommand}" Height="36" Width="140" ToolTip="Requires administrative interface driver">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconLiveCapture}" 
+                                      Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" 
+                                      Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <TextBlock Text="Start Capture" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding StopCaptureCommand}" Height="36" Width="140" Margin="12,0,0,0" ToolTip="Stop active interface capture">
+                            <TextBlock Text="Stop Capture" VerticalAlignment="Center" />
+                        </Button>
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding RefreshInterfacesCommand}" Height="36" Width="140" Margin="12,0,0,0">
+                            <TextBlock Text="Refresh Interfaces" VerticalAlignment="Center" />
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Status & Packet Counters Grid -->
+            <Grid Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Status Card -->
+                <Border Grid.Column="0" Style="{StaticResource SocCardBorderStyle}" Margin="0,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="Capture Engine Status" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,10" />
+                        <Border Background="#101A2E" BorderBrush="{StaticResource BrushBorderAccent}" BorderThickness="1" CornerRadius="6" Padding="14,10" Margin="0,4,0,0">
+                            <TextBlock Text="{Binding CaptureStatus}" Foreground="{StaticResource BrushAccentCyan}" FontWeight="Medium" FontSize="12.5" TextWrapping="Wrap" LineHeight="18" />
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Packet Count Area -->
+                <Border Grid.Column="1" Style="{StaticResource SocCardBorderStyle}" Margin="10,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Packet Count" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,10" />
+                        <TextBlock Text="{Binding PacketCountStatus}" Foreground="{StaticResource BrushTextPrimary}" FontSize="22" FontWeight="Bold" Margin="0,4,0,2" />
+                        <TextBlock Text="Live capture stream telemetry" Foreground="{StaticResource BrushTextMuted}" FontSize="12" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

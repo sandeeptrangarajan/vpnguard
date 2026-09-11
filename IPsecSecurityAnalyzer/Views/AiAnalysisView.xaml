@@ -1,0 +1,136 @@
+<UserControl x:Class="IPsecSecurityAnalyzer.Views.AiAnalysisView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="900" d:DesignWidth="1000">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="24">
+        <StackPanel MaxWidth="1200" HorizontalAlignment="Stretch">
+
+            <!-- Title -->
+            <TextBlock Text="AI Traffic Classification &amp; Anomaly Detection" Style="{StaticResource TitleHeaderStyle}" />
+            <TextBlock Text="Phase 5 — Machine learning classification, behavioral anomaly detection, and explainable AI inference." Style="{StaticResource SubtitleHeaderStyle}" Margin="0,4,0,20" />
+
+            <!-- Run Analysis Button + Status Banner -->
+            <Border Style="{StaticResource SocCardBorderStyle}" Padding="24" Margin="0,0,0,20">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="{Binding StatusMessage}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,0,4" />
+                        <TextBlock Text="{Binding ModelStatusText}" FontSize="13" Foreground="{StaticResource BrushWarning}" FontWeight="SemiBold" Margin="0,0,0,6" />
+                        <TextBlock Text="The AI engine uses a trained Random Forest classifier and Isolation Forest anomaly detector to classify encrypted IPsec traffic patterns using only metadata (no payload inspection)."
+                                   Foreground="{StaticResource BrushTextMuted}" TextWrapping="Wrap" FontSize="12.5" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="20,0,0,0">
+                        <Button Content="Run AI Analysis" Command="{Binding RunAnalysisCommand}" 
+                                Padding="16,8" FontSize="13" FontWeight="Bold" Cursor="Hand" />
+                        <Path Data="{StaticResource IconAi}" Fill="{StaticResource BrushAccentCyan}" Width="32" Height="32" Stretch="Uniform" HorizontalAlignment="Center" Margin="0,8,0,0" Opacity="0.7"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Loading Indicator -->
+            <Border Visibility="{Binding IsAnalyzing, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,16">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="Analyzing traffic patterns..." FontSize="14" Foreground="{StaticResource BrushAccentCyan}" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+
+            <!-- AI Engine Sections Grid -->
+            <Grid Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Section 1: AI-Inferred Traffic Type -->
+                <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource SocCardBorderStyle}" Margin="0,0,10,16">
+                    <StackPanel>
+                        <TextBlock Text="AI-Inferred Traffic Type" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,8" />
+                        <TextBlock Text="Classification:" Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,2" />
+                        <TextBlock Text="{Binding AiResult.DisplayTrafficType}" Foreground="{StaticResource BrushTextPrimary}" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,8" />
+                        <TextBlock Text="Traffic type inferred from packet size distribution, timing, and directional metadata." Foreground="{StaticResource BrushTextMuted}" FontSize="11.5" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Section 2: AI Confidence -->
+                <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource SocCardBorderStyle}" Margin="10,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="AI Confidence" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,8" />
+                        <TextBlock Text="Model Inference Confidence:" Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,2" />
+                        <TextBlock Text="{Binding AiResult.DisplayConfidence}" Foreground="{StaticResource BrushTextPrimary}" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,8" />
+                        <TextBlock Text="Statistical certainty computed from multi-dimensional feature distributions." Foreground="{StaticResource BrushTextMuted}" FontSize="11.5" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Section 3: Anomaly Detection -->
+                <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource SocCardBorderStyle}" Margin="0,0,10,16">
+                    <StackPanel>
+                        <TextBlock Text="Anomaly Detection" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,8" />
+                        <TextBlock Text="Status:" Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,2" />
+                        <TextBlock Text="{Binding AiResult.DisplayPrediction}" Foreground="{StaticResource BrushTextPrimary}" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <TextBlock Text="{Binding AiResult.DisplayAnomalySummary}" Foreground="{StaticResource BrushTextMuted}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8" />
+                        <TextBlock Text="Uses Isolation Forest to flag potentially unusual traffic patterns in encrypted flows." Foreground="{StaticResource BrushTextMuted}" FontSize="11.5" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Section 4: Protocol Identification -->
+                <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource SocCardBorderStyle}" Margin="10,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="AI-Inferred Protocol" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,8" />
+                        <TextBlock Text="Predicted Protocol:" Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,2" />
+                        <TextBlock Text="{Binding AiResult.DisplayProtocol}" Foreground="{StaticResource BrushTextPrimary}" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,8" />
+                        <TextBlock Text="Decodes transport signatures to distinguish genuine IPsec ESP from obfuscated proxies." Foreground="{StaticResource BrushTextMuted}" FontSize="11.5" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Feature Importance Section -->
+            <Border Style="{StaticResource SocCardBorderStyle}" Padding="20" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="Feature Importance (Explainability)" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,12" />
+                    <TextBlock Text="Top features contributing to the AI model's classification decision:" Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,0,0,8" />
+                    <ItemsControl ItemsSource="{Binding AiResult.TopFeatures}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="200" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="70" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Name}" Foreground="{StaticResource BrushTextPrimary}" FontSize="12" FontWeight="SemiBold" />
+                                    <ProgressBar Grid.Column="1" Value="{Binding Importance, Mode=OneWay}" Maximum="0.2" Height="12" Margin="8,0" Foreground="{StaticResource BrushAccentCyan}" />
+                                    <TextBlock Grid.Column="2" Text="{Binding DisplayImportance}" Foreground="{StaticResource BrushTextMuted}" FontSize="12" HorizontalAlignment="Right" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- Explanation Section -->
+            <Border Style="{StaticResource SocCardBorderStyle}" Padding="20" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="AI Explanation" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,8" />
+                    <TextBlock Text="{Binding AiResult.DisplayExplanation}" Foreground="{StaticResource BrushTextPrimary}" FontSize="12.5" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
+

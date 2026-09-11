@@ -1,0 +1,291 @@
+<UserControl x:Class="IPsecSecurityAnalyzer.Views.SecurityAssessmentView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:conv="clr-namespace:IPsecSecurityAnalyzer.Utilities.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="1000" d:DesignWidth="1100">
+
+    <UserControl.Resources>
+        <conv:BooleanToVisibilityConverter x:Key="BoolToVisConv" />
+        <conv:InverseBooleanConverter x:Key="InvBoolConv" />
+        <conv:SeverityToBrushConverter x:Key="SevToBrushConv" />
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="24">
+        <StackPanel MaxWidth="1200" HorizontalAlignment="Stretch">
+
+            <!-- Title Section -->
+            <TextBlock Text="Security Assessment Engine" Style="{StaticResource TitleHeaderStyle}" />
+            <TextBlock Text="Deterministic, evidence-based cryptographic evaluation, posture scoring, and actionable remediation guidance." Style="{StaticResource SubtitleHeaderStyle}" Margin="0,4,0,20" />
+
+            <!-- Empty State Notice Card (when unanalyzed) -->
+            <Border Style="{StaticResource SocCardBorderStyle}" Padding="32" Margin="0,0,0,20"
+                    Visibility="{Binding HasAssessment, Converter={StaticResource BoolToVisConv}, ConverterParameter=invert}">
+                <StackPanel HorizontalAlignment="Center" MaxWidth="600">
+                    <Border Background="#1E293B" CornerRadius="36" Width="72" Height="72" HorizontalAlignment="Center" Margin="0,0,0,16">
+                        <Path Data="{StaticResource IconSecurityAssessment}" Fill="{StaticResource BrushAccentCyan}" Width="32" Height="32" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="No security assessment available." FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" HorizontalAlignment="Center" Margin="0,0,0,6" />
+                    <TextBlock Text="{Binding EmptyStateNotice}" FontSize="13" Foreground="{StaticResource BrushTextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" LineHeight="20" />
+                </StackPanel>
+            </Border>
+
+            <!-- Active Assessment Content (when analyzed) -->
+            <StackPanel Visibility="{Binding HasAssessment, Converter={StaticResource BoolToVisConv}}">
+
+                <!-- 1. Executive Assessment Banner -->
+                <Border Style="{StaticResource SocCardBorderStyle}" Padding="20" Margin="0,0,0,20">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Summary info -->
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
+                            <TextBlock Text="Executive Risk Assessment" FontSize="16" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,0,4" />
+                            <TextBlock Text="{Binding SummaryText}" FontSize="12.5" Foreground="{StaticResource BrushTextSecondary}" TextWrapping="Wrap" LineHeight="18" Margin="0,0,0,6" />
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Policy: " Foreground="{StaticResource BrushTextMuted}" FontSize="11" />
+                                <TextBlock Text="{Binding Assessment.PolicyName}" Foreground="{StaticResource BrushAccentCyan}" FontSize="11" FontWeight="SemiBold" Margin="0,0,12,0" />
+                                <TextBlock Text="Evaluated: " Foreground="{StaticResource BrushTextMuted}" FontSize="11" />
+                                <TextBlock Text="{Binding Assessment.FormattedTimestamp}" Foreground="{StaticResource BrushTextSecondary}" FontSize="11" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Score Pill -->
+                        <Border Grid.Column="1" Background="{StaticResource BrushBgInput}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="16,10" VerticalAlignment="Center" Margin="8,0">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="RISK SCORE" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" HorizontalAlignment="Center" Margin="0,0,0,2" />
+                                <TextBlock Text="{Binding DisplayRiskScore}" FontSize="22" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Risk Level Pill -->
+                        <Border Grid.Column="2" Background="{StaticResource BrushBgInput}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="16,10" VerticalAlignment="Center" Margin="8,0">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="RISK LEVEL" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" HorizontalAlignment="Center" Margin="0,0,0,2" />
+                                <TextBlock Text="{Binding DisplayRiskLevel}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushWarning}" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Coverage Pill -->
+                        <Border Grid.Column="3" Background="{StaticResource BrushBgInput}" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1" CornerRadius="8" Padding="16,10" VerticalAlignment="Center" Margin="8,0,0,0">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="COVERAGE" FontSize="10" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" HorizontalAlignment="Center" Margin="0,0,0,2" />
+                                <TextBlock Text="{Binding DisplayCoverage}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource BrushAccentCyan}" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- 2. Severity Breakdown Summary Counters -->
+                <TextBlock Text="Findings Severity Breakdown" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,10" />
+                <Grid Margin="0,0,0,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Critical -->
+                    <Border Grid.Column="0" Style="{StaticResource SocCardBorderStyle}" Margin="0,0,6,0">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="Critical" FontSize="11" FontWeight="Bold" Foreground="#EF4444" Margin="0,0,0,2" />
+                            <TextBlock Text="{Binding DisplayCriticalCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- High -->
+                    <Border Grid.Column="1" Style="{StaticResource SocCardBorderStyle}" Margin="4,0,4,0">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="High" FontSize="11" FontWeight="Bold" Foreground="#F97316" Margin="0,0,0,2" />
+                            <TextBlock Text="{Binding DisplayHighCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Medium -->
+                    <Border Grid.Column="2" Style="{StaticResource SocCardBorderStyle}" Margin="4,0,4,0">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="Medium" FontSize="11" FontWeight="Bold" Foreground="#F59E0B" Margin="0,0,0,2" />
+                            <TextBlock Text="{Binding DisplayMediumCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Low -->
+                    <Border Grid.Column="3" Style="{StaticResource SocCardBorderStyle}" Margin="4,0,4,0">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="Low" FontSize="11" FontWeight="Bold" Foreground="#3B82F6" Margin="0,0,0,2" />
+                            <TextBlock Text="{Binding DisplayLowCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Informational -->
+                    <Border Grid.Column="4" Style="{StaticResource SocCardBorderStyle}" Margin="4,0,4,0">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="Informational" FontSize="11" FontWeight="Bold" Foreground="#6B7280" Margin="0,0,0,2" />
+                            <TextBlock Text="{Binding DisplayInformationalCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Unknown / Unassessed -->
+                    <Border Grid.Column="5" Style="{StaticResource SocCardBorderStyle}" Margin="6,0,0,0">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="Unassessed" FontSize="11" FontWeight="Bold" Foreground="#8B5CF6" Margin="0,0,0,2" />
+                            <TextBlock Text="{Binding DisplayUnknownCount}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- 3. Security Findings & Detailed Inspector (2-Pane Layout) -->
+                <TextBlock Text="Identified Findings &amp; Evidence Details" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,10" />
+                <Grid Margin="0,0,0,24">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.2*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Findings DataGrid -->
+                    <Border Grid.Column="0" Style="{StaticResource SocCardBorderStyle}" Padding="0" Margin="0,0,12,0" MaxHeight="380">
+                        <DataGrid ItemsSource="{Binding Findings}" SelectedItem="{Binding SelectedFinding}"
+                                  AutoGenerateColumns="False" IsReadOnly="True" MinRowHeight="32" SelectionMode="Single">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Rule ID" Binding="{Binding RuleId}" Width="100" />
+                                <DataGridTemplateColumn Header="Severity" Width="90">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border CornerRadius="4" Padding="6,2" Background="{Binding Severity, Converter={StaticResource SevToBrushConv}}" HorizontalAlignment="Left">
+                                                <TextBlock Text="{Binding FormattedSeverity}" Foreground="#0F172A" FontWeight="Bold" FontSize="10.5" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Title" Binding="{Binding Title}" Width="*" />
+                                <DataGridTextColumn Header="Risk Weight" Binding="{Binding FormattedRiskContribution}" Width="80" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+
+                    <!-- Selected Finding Detail Inspector -->
+                    <Border Grid.Column="1" Style="{StaticResource SocCardBorderStyle}" Padding="16" MaxHeight="380">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel DataContext="{Binding SelectedFinding}">
+                                <TextBlock Text="Finding Detail &amp; Evidence" FontSize="14" FontWeight="Bold" Foreground="{StaticResource BrushTextPrimary}" Margin="0,0,0,8" />
+
+                                <TextBlock Text="Observed Value:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,1" />
+                                <TextBlock Text="{Binding ObservedValue}" FontSize="12.5" Foreground="{StaticResource BrushWarning}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,6" />
+
+                                <TextBlock Text="Expected / Preferred Baseline:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,1" />
+                                <TextBlock Text="{Binding ExpectedValue}" FontSize="12.5" Foreground="{StaticResource BrushSuccess}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,6" />
+
+                                <TextBlock Text="Observable Evidence:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,1" />
+                                <TextBlock Text="{Binding Evidence}" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" TextWrapping="Wrap" LineHeight="16" Margin="0,0,0,6" />
+
+                                <TextBlock Text="Security Implication:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,1" />
+                                <TextBlock Text="{Binding Description}" FontSize="12" Foreground="{StaticResource BrushTextSecondary}" TextWrapping="Wrap" LineHeight="16" Margin="0,0,0,6" />
+
+                                <TextBlock Text="Actionable Recommendation:" FontSize="11" FontWeight="Bold" Foreground="{StaticResource BrushTextMuted}" Margin="0,4,0,1" />
+                                <TextBlock Text="{Binding Recommendation}" FontSize="12" Foreground="{StaticResource BrushAccentCyan}" TextWrapping="Wrap" LineHeight="16" />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+
+                <!-- 4. Assessment Modules Grid -->
+                <TextBlock Text="Cryptographic &amp; Protocol Assessment Modules" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,12" />
+                <Grid Margin="0,0,0,20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Section 1: Cryptographic Strength -->
+                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource SocCardBorderStyle}" Margin="0,0,8,12">
+                        <StackPanel>
+                            <TextBlock Text="Cryptographic Strength" Style="{StaticResource CardHeaderStyle}" FontSize="14" />
+                            <TextBlock Text="Evaluates encryption cipher bit lengths, block modes, and hash algorithms." Style="{StaticResource CardSubtitleStyle}" Margin="0,2,0,8" />
+                            <TextBlock Text="{Binding Assessment.CryptographicStrengthStatus}" Foreground="{StaticResource BrushTextPrimary}" FontWeight="SemiBold" FontSize="12.5" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Section 2: Protocol Security -->
+                    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource SocCardBorderStyle}" Margin="8,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="Protocol Security" Style="{StaticResource CardHeaderStyle}" FontSize="14" />
+                            <TextBlock Text="Validates IKE versioning, SA payload headers, and encapsulation mode." Style="{StaticResource CardSubtitleStyle}" Margin="0,2,0,8" />
+                            <TextBlock Text="{Binding Assessment.ProtocolSecurityStatus}" Foreground="{StaticResource BrushTextPrimary}" FontWeight="SemiBold" FontSize="12.5" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Section 3: Key Exchange Security -->
+                    <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource SocCardBorderStyle}" Margin="0,0,8,12">
+                        <StackPanel>
+                            <TextBlock Text="Key Exchange Security" Style="{StaticResource CardHeaderStyle}" FontSize="14" />
+                            <TextBlock Text="Assesses Diffie-Hellman group modulus size, entropy, and curve parameters." Style="{StaticResource CardSubtitleStyle}" Margin="0,2,0,8" />
+                            <TextBlock Text="{Binding Assessment.KeyExchangeSecurityStatus}" Foreground="{StaticResource BrushTextPrimary}" FontWeight="SemiBold" FontSize="12.5" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Section 4: PFS (Perfect Forward Secrecy) -->
+                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource SocCardBorderStyle}" Margin="8,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="PFS (Perfect Forward Secrecy)" Style="{StaticResource CardHeaderStyle}" FontSize="14" />
+                            <TextBlock Text="Verifies Phase 2 Child SA ephemeral key regeneration configuration." Style="{StaticResource CardSubtitleStyle}" Margin="0,2,0,8" />
+                            <TextBlock Text="{Binding Assessment.PfsStatus}" Foreground="{StaticResource BrushTextPrimary}" FontWeight="SemiBold" FontSize="12.5" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Section 5: Replay Protection -->
+                    <Border Grid.Row="2" Grid.Column="0" Style="{StaticResource SocCardBorderStyle}" Margin="0,0,8,12">
+                        <StackPanel>
+                            <TextBlock Text="Replay Protection" Style="{StaticResource CardHeaderStyle}" FontSize="14" />
+                            <TextBlock Text="Analyzes ESP Anti-Replay sequence numbers and sliding window integrity." Style="{StaticResource CardSubtitleStyle}" Margin="0,2,0,8" />
+                            <TextBlock Text="{Binding Assessment.ReplayProtectionStatus}" Foreground="{StaticResource BrushTextPrimary}" FontWeight="SemiBold" FontSize="12.5" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Section 6: SA Configuration -->
+                    <Border Grid.Row="2" Grid.Column="1" Style="{StaticResource SocCardBorderStyle}" Margin="8,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="SA Configuration" Style="{StaticResource CardHeaderStyle}" FontSize="14" />
+                            <TextBlock Text="Checks Security Association lifetimes, rekeying intervals, and proposal limits." Style="{StaticResource CardSubtitleStyle}" Margin="0,2,0,8" />
+                            <TextBlock Text="{Binding Assessment.SaConfigurationStatus}" Foreground="{StaticResource BrushTextPrimary}" FontWeight="SemiBold" FontSize="12.5" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Section 7: Configuration Compliance -->
+                    <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource SocCardBorderStyle}" Margin="0,0,8,0">
+                        <StackPanel>
+                            <TextBlock Text="Configuration Compliance" Style="{StaticResource CardHeaderStyle}" FontSize="14" />
+                            <TextBlock Text="Maps active proposal suites against NIST SP 800-77, CNSA, and RFC 7321." Style="{StaticResource CardSubtitleStyle}" Margin="0,2,0,8" />
+                            <TextBlock Text="{Binding Assessment.ConfigurationComplianceStatus}" Foreground="{StaticResource BrushTextPrimary}" FontWeight="SemiBold" FontSize="12.5" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Section 8: Metadata Exposure -->
+                    <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource SocCardBorderStyle}" Margin="8,0,0,0">
+                        <StackPanel>
+                            <TextBlock Text="Metadata Exposure" Style="{StaticResource CardHeaderStyle}" FontSize="14" />
+                            <TextBlock Text="Detects unencrypted IKE identity leaks, aggressive mode payloads, and NAT-T tags." Style="{StaticResource CardSubtitleStyle}" Margin="0,2,0,8" />
+                            <TextBlock Text="{Binding Assessment.MetadataExposureStatus}" Foreground="{StaticResource BrushTextPrimary}" FontWeight="SemiBold" FontSize="12.5" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
