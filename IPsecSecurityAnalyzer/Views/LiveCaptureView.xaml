@@ -3,20 +3,61 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:conv="clr-namespace:IPsecSecurityAnalyzer.Utilities.Converters"
              mc:Ignorable="d" 
-             d:DesignHeight="700" d:DesignWidth="1000">
+             d:DesignHeight="850" d:DesignWidth="1100">
+
+    <UserControl.Resources>
+        <conv:BooleanToVisibilityConverter x:Key="BoolToVisConv" />
+        <conv:InverseBooleanConverter x:Key="InverseBoolConv" />
+    </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="24">
         <StackPanel MaxWidth="1200" HorizontalAlignment="Stretch">
 
-            <!-- Title -->
-            <TextBlock Text="Live Capture" Style="{StaticResource TitleHeaderStyle}" />
-            <TextBlock Text="Capture live network interface frames for real-time IPsec VPN tunnel monitoring." Style="{StaticResource SubtitleHeaderStyle}" Margin="0,4,0,20" />
+            <!-- Title & Live Stream Status Header -->
+            <Grid Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="Live Capture &amp; Stream Analyzer" Style="{StaticResource TitleHeaderStyle}" />
+                    <TextBlock Text="Capture, stream, dissect, and evaluate live network interface traffic and IPsec VPN tunnels in real time." Style="{StaticResource SubtitleHeaderStyle}" Margin="0,4,0,0" />
+                </StackPanel>
+
+                <!-- Recording / Ready Badge -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <!-- Live Recording Badge -->
+                    <Border Background="#1A162B1D" BorderBrush="#10B981" BorderThickness="1.5" CornerRadius="16" Padding="14,6"
+                            Visibility="{Binding IsCapturing, Converter={StaticResource BoolToVisConv}}">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="10" Height="10" Fill="#10B981" Margin="0,0,8,0">
+                                <Ellipse.Triggers>
+                                    <EventTrigger RoutedEvent="Loaded">
+                                        <BeginStoryboard>
+                                            <Storyboard RepeatBehavior="Forever">
+                                                <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1.0" To="0.2" Duration="0:0:0.8" AutoReverse="True" />
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </Ellipse.Triggers>
+                            </Ellipse>
+                            <TextBlock Text="RECORDING LIVE STREAM" Foreground="#34D399" FontWeight="Bold" FontSize="11" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Idle / Ready Badge -->
+                    <Border Background="#121827" BorderBrush="{StaticResource BrushBorderAccent}" BorderThickness="1" CornerRadius="16" Padding="14,6"
+                            Visibility="{Binding IsCapturing, Converter={StaticResource BoolToVisConv}, ConverterParameter=invert}">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="8" Height="8" Fill="{StaticResource BrushAccentCyan}" Margin="0,0,8,0" />
+                            <TextBlock Text="CAPTURE ENGINE READY" Foreground="{StaticResource BrushAccentCyan}" FontWeight="SemiBold" FontSize="11" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
 
             <!-- Capture Controls Card -->
             <Border Style="{StaticResource SocCardBorderStyle}" Margin="0,0,0,20">
                 <StackPanel>
-                    <TextBlock Text="Live Interface Capture Configuration" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,16" />
+                    <TextBlock Text="Live Stream Configuration" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,16" />
 
                     <Grid Margin="0,0,0,16">
                         <Grid.RowDefinitions>
@@ -29,19 +70,31 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Network Interface Selection -->
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Network Interface:" Foreground="{StaticResource BrushTextMuted}" FontSize="13" VerticalAlignment="Center" Margin="0,8" />
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Network Interface / Stream:" Foreground="{StaticResource BrushTextMuted}" FontSize="13" VerticalAlignment="Center" Margin="0,8" />
                         <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding AvailableInterfaces}" SelectedItem="{Binding SelectedInterface}" 
-                                  Height="36" Margin="0,8" ToolTip="Select a local or virtual network interface for live capture" />
+                                  IsEnabled="{Binding IsCapturing, Converter={StaticResource InverseBoolConv}}"
+                                  Height="36" Margin="0,8" ToolTip="Select a local network interface or strongSwan testbed stream" />
 
                         <!-- Capture Duration -->
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Capture Duration (seconds):" Foreground="{StaticResource BrushTextMuted}" FontSize="13" VerticalAlignment="Center" Margin="0,8" />
-                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding CaptureDuration, UpdateSourceTrigger=PropertyChanged}" 
-                                 Style="{StaticResource SocTextBoxStyle}" Height="34" Width="200" HorizontalAlignment="Left" Margin="0,8" MaxLength="6" />
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Duration (seconds):" Foreground="{StaticResource BrushTextMuted}" FontSize="13" VerticalAlignment="Center" Margin="0,8" />
+                        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,8">
+                            <TextBox Text="{Binding CaptureDuration, UpdateSourceTrigger=PropertyChanged}" 
+                                     IsEnabled="{Binding IsCapturing, Converter={StaticResource InverseBoolConv}}"
+                                     Style="{StaticResource SocTextBoxStyle}" Height="34" Width="90" Margin="0,0,10,0" MaxLength="5" />
+                            
+                            <!-- Preset Pills -->
+                            <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding SetDurationCommand}" CommandParameter="10" Content="10s" Height="30" Width="48" Margin="0,0,6,0" FontSize="11" Padding="0" />
+                            <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding SetDurationCommand}" CommandParameter="30" Content="30s" Height="30" Width="48" Margin="0,0,6,0" FontSize="11" Padding="0" />
+                            <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding SetDurationCommand}" CommandParameter="60" Content="60s" Height="30" Width="48" Margin="0,0,6,0" FontSize="11" Padding="0" />
+                            <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding SetDurationCommand}" CommandParameter="120" Content="120s" Height="30" Width="52" FontSize="11" Padding="0" />
+                        </StackPanel>
                     </Grid>
 
                     <!-- Action Buttons -->
                     <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                        <Button Style="{StaticResource PrimaryButtonStyle}" Command="{Binding StartCaptureCommand}" Height="36" Width="140" ToolTip="Requires administrative interface driver">
+                        <!-- Start Capture -->
+                        <Button Style="{StaticResource PrimaryButtonStyle}" Command="{Binding StartCaptureCommand}" 
+                                Height="36" Width="140" ToolTip="Begin streaming live interface packets">
                             <StackPanel Orientation="Horizontal">
                                 <Path Data="{StaticResource IconLiveCapture}" 
                                       Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" 
@@ -49,42 +102,182 @@
                                 <TextBlock Text="Start Capture" VerticalAlignment="Center" />
                             </StackPanel>
                         </Button>
-                        <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding StopCaptureCommand}" Height="36" Width="140" Margin="12,0,0,0" ToolTip="Stop active interface capture">
-                            <TextBlock Text="Stop Capture" VerticalAlignment="Center" />
+
+                        <!-- Stop Capture -->
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding StopCaptureCommand}" 
+                                Height="36" Width="140" Margin="12,0,0,0" ToolTip="Stop active packet stream">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconFindings}" Fill="{StaticResource BrushDanger}" Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <TextBlock Text="Stop Capture" Foreground="{StaticResource BrushDanger}" VerticalAlignment="Center" />
+                            </StackPanel>
                         </Button>
-                        <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding RefreshInterfacesCommand}" Height="36" Width="140" Margin="12,0,0,0">
-                            <TextBlock Text="Refresh Interfaces" VerticalAlignment="Center" />
+
+                        <!-- Analyze Captured Stream -->
+                        <Button Style="{StaticResource PrimaryButtonStyle}" Command="{Binding AnalyzeStreamCommand}" 
+                                Height="36" Margin="12,0,0,0" Padding="14,0" ToolTip="Run AI and cryptographic posture analysis on captured session">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconIpsec}" Fill="{StaticResource BrushTextPrimary}" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <TextBlock Text="Analyze Captured Stream" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Save PCAP -->
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding SavePcapCommand}" 
+                                Height="36" Margin="12,0,0,0" Padding="14,0" ToolTip="Export captured PCAP file">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconFolder}" Fill="{StaticResource BrushTextPrimary}" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <TextBlock Text="Export PCAP" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Refresh -->
+                        <Button Style="{StaticResource SecondaryButtonStyle}" Command="{Binding RefreshInterfacesCommand}" 
+                                Height="36" Width="100" Margin="12,0,0,0" ToolTip="Refresh available interfaces">
+                            <TextBlock Text="Refresh" VerticalAlignment="Center" />
                         </Button>
                     </StackPanel>
                 </StackPanel>
             </Border>
 
-            <!-- Status & Packet Counters Grid -->
+            <!-- Status & Live Telemetry Grid -->
             <Grid Margin="0,0,0,20">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="1.5*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Status Card -->
-                <Border Grid.Column="0" Style="{StaticResource SocCardBorderStyle}" Margin="0,0,10,0">
+                <!-- Total Packets -->
+                <Border Grid.Column="0" Style="{StaticResource SocCardBorderStyle}" Margin="0,0,8,0" Padding="16,14">
                     <StackPanel>
-                        <TextBlock Text="Capture Engine Status" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,10" />
-                        <Border Background="#101A2E" BorderBrush="{StaticResource BrushBorderAccent}" BorderThickness="1" CornerRadius="6" Padding="14,10" Margin="0,4,0,0">
-                            <TextBlock Text="{Binding CaptureStatus}" Foreground="{StaticResource BrushAccentCyan}" FontWeight="Medium" FontSize="12.5" TextWrapping="Wrap" LineHeight="18" />
+                        <TextBlock Text="Packets Streamed" Foreground="{StaticResource BrushTextMuted}" FontSize="12" />
+                        <TextBlock Text="{Binding TotalPackets, StringFormat='{}{0:N0}'}" Foreground="{StaticResource BrushTextPrimary}" FontSize="24" FontWeight="Bold" Margin="0,4,0,2" />
+                        <TextBlock Text="{Binding PacketCountStatus}" Foreground="{StaticResource BrushAccentCyan}" FontSize="11" FontWeight="Medium" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Data Transferred -->
+                <Border Grid.Column="1" Style="{StaticResource SocCardBorderStyle}" Margin="4,0,4,0" Padding="16,14">
+                    <StackPanel>
+                        <TextBlock Text="Data Volume" Foreground="{StaticResource BrushTextMuted}" FontSize="12" />
+                        <TextBlock Text="{Binding FormattedBytes}" Foreground="{StaticResource BrushTextPrimary}" FontSize="24" FontWeight="Bold" Margin="0,4,0,2" />
+                        <TextBlock Text="Stream throughput" Foreground="{StaticResource BrushTextMuted}" FontSize="11" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Protocols Breakdown -->
+                <Border Grid.Column="2" Style="{StaticResource SocCardBorderStyle}" Margin="4,0,4,0" Padding="16,14">
+                    <StackPanel>
+                        <TextBlock Text="IPsec Distribution" Foreground="{StaticResource BrushTextMuted}" FontSize="12" />
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,2">
+                            <TextBlock Text="ESP: " Foreground="{StaticResource BrushAccentCyan}" FontSize="18" FontWeight="Bold" />
+                            <TextBlock Text="{Binding EspCount}" Foreground="{StaticResource BrushTextPrimary}" FontSize="18" FontWeight="Bold" Margin="0,0,10,0" />
+                            <TextBlock Text="IKE: " Foreground="#A78BFA" FontSize="18" FontWeight="Bold" />
+                            <TextBlock Text="{Binding IkeCount}" Foreground="{StaticResource BrushTextPrimary}" FontSize="18" FontWeight="Bold" />
+                        </StackPanel>
+                        <TextBlock Text="Encrypted Tunnel vs Handshake" Foreground="{StaticResource BrushTextMuted}" FontSize="11" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Engine Status -->
+                <Border Grid.Column="3" Style="{StaticResource SocCardBorderStyle}" Margin="8,0,0,0" Padding="16,14">
+                    <StackPanel>
+                        <TextBlock Text="Capture Engine Telemetry" Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,0,0,6" />
+                        <Border Background="#101A2E" BorderBrush="{StaticResource BrushBorderAccent}" BorderThickness="1" CornerRadius="6" Padding="10,6">
+                            <TextBlock Text="{Binding CaptureStatus}" Foreground="{StaticResource BrushAccentCyan}" FontWeight="Medium" FontSize="12" TextWrapping="Wrap" LineHeight="17" />
                         </Border>
                     </StackPanel>
                 </Border>
-
-                <!-- Packet Count Area -->
-                <Border Grid.Column="1" Style="{StaticResource SocCardBorderStyle}" Margin="10,0,0,0">
-                    <StackPanel>
-                        <TextBlock Text="Packet Count" Style="{StaticResource CardHeaderStyle}" Margin="0,0,0,10" />
-                        <TextBlock Text="{Binding PacketCountStatus}" Foreground="{StaticResource BrushTextPrimary}" FontSize="22" FontWeight="Bold" Margin="0,4,0,2" />
-                        <TextBlock Text="Live capture stream telemetry" Foreground="{StaticResource BrushTextMuted}" FontSize="12" />
-                    </StackPanel>
-                </Border>
             </Grid>
+
+            <!-- Instant Security Posture Summary Card (Revealed upon Analysis) -->
+            <Border Style="{StaticResource SocCardBorderStyle}" Margin="0,0,0,20"
+                    BorderBrush="{StaticResource BrushAccentCyan}" BorderThickness="1.5"
+                    Visibility="{Binding HasAnalysisResult, Converter={StaticResource BoolToVisConv}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="180" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="220" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Score Badge -->
+                    <Border Grid.Column="0" Background="#132338" CornerRadius="8" Padding="16" Margin="0,0,16,0" VerticalAlignment="Center">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="SECURITY SCORE" Foreground="{StaticResource BrushTextMuted}" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" />
+                            <TextBlock Text="{Binding SecurityScore, StringFormat='{}{0:F0}'}" Foreground="#34D399" FontSize="36" FontWeight="ExtraBold" HorizontalAlignment="Center" Margin="0,2,0,0" />
+                            <TextBlock Text="{Binding RiskLevel, StringFormat='{}Risk: {0}'}" Foreground="{StaticResource BrushAccentCyan}" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Cryptographic Details -->
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Live Stream Automated Security Assessment" Foreground="{StaticResource BrushTextPrimary}" FontSize="15" FontWeight="Bold" Margin="0,0,0,8" />
+                        
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="120" />
+                                <ColumnDefinition Width="180" />
+                                <ColumnDefinition Width="120" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Inferred Mode:" Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,2" />
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding InferredMode}" Foreground="{StaticResource BrushTextPrimary}" FontWeight="SemiBold" FontSize="12" Margin="0,2" />
+
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="Encryption:" Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,2" />
+                            <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding EncryptionAlgorithm}" Foreground="{StaticResource BrushAccentCyan}" FontWeight="SemiBold" FontSize="12" Margin="0,2" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Integrity:" Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,2" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding IntegrityAlgorithm}" Foreground="{StaticResource BrushTextPrimary}" FontWeight="SemiBold" FontSize="12" Margin="0,2" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="2" Text="DH Key Exch:" Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,2" />
+                            <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding DhGroup}" Foreground="{StaticResource BrushTextPrimary}" FontWeight="SemiBold" FontSize="12" Margin="0,2" />
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Navigate Button -->
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                        <Button Style="{StaticResource PrimaryButtonStyle}" Command="{Binding ViewFullReportCommand}" Height="40" Padding="14,0">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="{StaticResource IconDashboard}" Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <TextBlock Text="Open Full Assessment" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Real-Time Packet Stream Grid Card -->
+            <Border Style="{StaticResource SocCardBorderStyle}" Margin="0,0,0,20">
+                <StackPanel>
+                    <Grid Margin="0,0,0,12">
+                        <TextBlock Text="Real-Time Packet Stream Inspection" Style="{StaticResource CardHeaderStyle}" />
+                        <TextBlock Text="{Binding PacketCountStatus, StringFormat='{}Live Feed: {0}'}" Foreground="{StaticResource BrushAccentCyan}" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <DataGrid ItemsSource="{Binding LivePackets}" 
+                              MaxHeight="450" 
+                              ScrollViewer.VerticalScrollBarVisibility="Auto"
+                              ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="No." Binding="{Binding PacketNumber}" Width="60" />
+                            <DataGridTextColumn Header="Time" Binding="{Binding Timestamp}" Width="160" />
+                            <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="150" />
+                            <DataGridTextColumn Header="Destination" Binding="{Binding Destination}" Width="150" />
+                            <DataGridTextColumn Header="Protocol" Binding="{Binding Protocol}" Width="90" />
+                            <DataGridTextColumn Header="Length" Binding="{Binding Length}" Width="75" />
+                            <DataGridTextColumn Header="SPI" Binding="{Binding Spi}" Width="110" />
+                            <DataGridTextColumn Header="Info" Binding="{Binding Info}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
 
         </StackPanel>
     </ScrollViewer>

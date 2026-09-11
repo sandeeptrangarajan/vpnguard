@@ -577,6 +577,11 @@ public class Program
         passed += phase7Passed;
         failed += phase7Failed;
 
+        // Live Capture & Real-Time Stream Analyzer Tests
+        var (livePassed, liveFailed) = await IPsecSecurityAnalyzer.Tests.Services.LiveCaptureTests.RunAllAsync();
+        passed += livePassed;
+        failed += liveFailed;
+
         Console.WriteLine("\n================================================================================");
         Console.WriteLine($"   Complete Test Suite: {passed} PASSED, {failed} FAILED");
         Console.WriteLine("================================================================================\n");

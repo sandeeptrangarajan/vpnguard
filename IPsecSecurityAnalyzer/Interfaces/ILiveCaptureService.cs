@@ -1,7 +1,9 @@
+using IPsecSecurityAnalyzer.Models;
+
 namespace IPsecSecurityAnalyzer.Interfaces;
 
 /// <summary>
-/// Service interface for network interface discovery and live packet streaming.
+/// Service interface for network interface discovery, live packet streaming, and PCAP capture generation.
 /// </summary>
 public interface ILiveCaptureService
 {
@@ -11,7 +13,37 @@ public interface ILiveCaptureService
     bool IsCapturing { get; }
 
     /// <summary>
-    /// Discovers available network interfaces on the local host.
+    /// Total count of packets captured in the current or most recent session.
+    /// </summary>
+    int CapturedPacketsCount { get; }
+
+    /// <summary>
+    /// Total bytes captured in the current or most recent session.
+    /// </summary>
+    long CapturedBytesCount { get; }
+
+    /// <summary>
+    /// Path to the generated PCAP file for the active or completed session.
+    /// </summary>
+    string? LastCapturedPcapPath { get; }
+
+    /// <summary>
+    /// Fired whenever a new packet is captured or streamed.
+    /// </summary>
+    event EventHandler<PacketInfo>? PacketReceived;
+
+    /// <summary>
+    /// Fired when engine capture status changes.
+    /// </summary>
+    event EventHandler<string>? StatusChanged;
+
+    /// <summary>
+    /// Fired when capture completes, passing the path to the captured PCAP.
+    /// </summary>
+    event EventHandler<string>? CaptureStopped;
+
+    /// <summary>
+    /// Discovers available network interfaces on the local host and virtual testbed streams.
     /// </summary>
     Task<IReadOnlyList<string>> GetAvailableInterfacesAsync();
 
@@ -25,3 +57,4 @@ public interface ILiveCaptureService
     /// </summary>
     Task StopCaptureAsync();
 }
+
