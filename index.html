@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VPNGuard — IPsec Security Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0A0E17;
+            --bg-secondary: #111827;
+            --bg-card: rgba(17, 24, 39, 0.8);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --accent-cyan: #00F2FE;
+            --accent-blue: #4FACFE;
+            --accent-purple: #7F56D9;
+            --accent-emerald: #10B981;
+            --accent-warning: #F59E0B;
+            --accent-danger: #EF4444;
+            --text-main: #F9FAFB;
+            --text-muted: #9CA3AF;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(0, 242, 254, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(127, 86, 217, 0.05) 0%, transparent 40%);
+        }
+
+        header {
+            background: rgba(17, 24, 39, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #0A0E17;
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.3);
+        }
+
+        .brand-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #FFF, var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-subtitle {
+            font-size: 0.75rem;
+            color: var(--accent-cyan);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--accent-emerald);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-emerald);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        main {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(0, 242, 254, 0.3);
+        }
+
+        .metric-title {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .metric-subtext {
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            color: var(--accent-emerald);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 0.9rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .tag-critical { background: rgba(239, 68, 68, 0.15); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .tag-high { background: rgba(245, 158, 11, 0.15); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .tag-medium { background: rgba(59, 130, 246, 0.15); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .tag-low { background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+        .btn {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            color: #0A0E17;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: opacity 0.2s ease, transform 0.1s ease;
+        }
+
+        .btn:hover { opacity: 0.9; transform: scale(1.02); }
+
+        .code-block {
+            background: #060911;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--accent-cyan);
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="brand">
+            <div class="brand-icon">🛡️</div>
+            <div>
+                <div class="brand-title">VPNGuard SOC Dashboard</div>
+                <div class="brand-subtitle">IPsec Protocol & AI Analyzer</div>
+            </div>
+        </div>
+        <div class="status-badge">
+            <div class="pulse-dot"></div>
+            Production Cloud Ready (Vercel)
+        </div>
+    </header>
+
+    <main>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-title">Overall Risk Score</div>
+                <div class="metric-value" style="color: var(--accent-emerald);">15 <span style="font-size: 1rem; color: var(--text-muted);">/ 100</span></div>
+                <div class="metric-subtext">Low Vulnerability Risk</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Assessment Coverage</div>
+                <div class="metric-value" style="color: var(--accent-cyan);">100%</div>
+                <div class="metric-subtext">8/8 Core Parameters</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Active Security Rules</div>
+                <div class="metric-value" style="color: var(--accent-purple);">10 Rules</div>
+                <div class="metric-subtext">Modular Compliance Engine</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">AI Classification</div>
+                <div class="metric-value" style="color: var(--accent-blue);">VPN / Web</div>
+                <div class="metric-subtext">RandomForest (98.4% Conf)</div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🛡️ IPsec & IKE Dissection Security Rules</div>
+                        <button class="btn" onclick="alert('Running live security dissection audit...')">Run Dissection</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Rule ID</th>
+                                <th>Category</th>
+                                <th>Severity</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>IPSEC-IKE-001</code></td>
+                                <td>IKE Version</td>
+                                <td><span class="tag tag-medium">Medium</span></td>
+                                <td>Detects deprecated IKEv1 protocol usage (RFC 2409).</td>
+                                <td><span style="color: var(--accent-emerald);">Passed (IKEv2)</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>IPSEC-CRYPTO-001</code></td>
+                                <td>Encryption</td>
+                                <td><span class="tag tag-critical">Critical</span></td>
+                                <td>Detects weak ciphers (3DES, DES) or NULL transforms.</td>
+                                <td><span style="color: var(--accent-emerald);">Passed (AES-256-GCM)</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>IPSEC-CRYPTO-002</code></td>
+                                <td>Integrity</td>
+                                <td><span class="tag tag-high">High</span></td>
+                                <td>Identifies deprecated hashes (MD5, HMAC-MD5, SHA-1).</td>
+                                <td><span style="color: var(--accent-emerald);">Passed (HMAC-SHA256)</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>IPSEC-CRYPTO-003</code></td>
+                                <td>Diffie-Hellman</td>
+                                <td><span class="tag tag-high">High</span></td>
+                                <td>Flags sub-2048-bit MODP DH groups (Group 1, Group 2).</td>
+                                <td><span style="color: var(--accent-emerald);">Passed (Group 14)</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>IPSEC-CONFIG-001</code></td>
+                                <td>PFS</td>
+                                <td><span class="tag tag-medium">Medium</span></td>
+                                <td>Flags disabled Perfect Forward Secrecy on Child SAs.</td>
+                                <td><span style="color: var(--accent-emerald);">Passed (Enabled)</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🤖 AI Anomaly Detection & Metadata Features (23D)</div>
+                    </div>
+                    <div class="code-block">
+{
+  "traffic_type": "Web browsing / VPN Tunnel",
+  "ai_confidence": 0.9842,
+  "anomaly_flagged": false,
+  "features": {
+    "total_bytes": 1450280,
+    "packet_count": 1240,
+    "avg_packet_size": 1169.5,
+    "avg_inter_arrival_time": 0.0142,
+    "forward_reverse_ratio": 0.342,
+    "esp_packet_count": 1210
+  }
+}
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">💾 SQLite Audit Log</div>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        Local DB Path: <code>Data/vpnguard.db</code>
+                    </p>
+                    <div style="font-size: 0.85rem; line-height: 1.6;">
+                        <div style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color);">
+                            <strong>Analysis #8941</strong> — Low Risk (0/100)<br>
+                            <span style="color: var(--text-muted);">2026-09-18 15:50:00</span>
+                        </div>
+                        <div style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color);">
+                            <strong>Analysis #8940</strong> — Low Risk (15/100)<br>
+                            <span style="color: var(--text-muted);">2026-09-18 10:20:15</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">📄 Reports & Export</div>
+                    </div>
+                    <button class="btn" style="width: 100%; margin-bottom: 0.75rem;" onclick="alert('Auditor-Grade ISO 32000-1 PDF Compliance Report Export Triggered.')">Export PDF Report</button>
+                    <button class="btn" style="width: 100%; background: transparent; border: 1px solid var(--border-color); color: var(--text-main);" onclick="alert('Machine-Readable JSON Audit Snapshot Exported.')">Export JSON Audit</button>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
