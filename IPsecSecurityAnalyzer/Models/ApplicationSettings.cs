@@ -13,7 +13,7 @@ public class ApplicationSettings
     public string ModelPath { get; set; } = string.Empty;
 
     // Environmental / Status metadata
-    public string ApplicationVersion { get; set; } = "v1.0.0 (SIH26160)";
+    public string ApplicationVersion { get; set; } = "v1.0.0";
     public string AnalyzerStatus { get; set; } = "TShark Dissector Ready";
     public string AiEngineStatus { get; set; } = "Python AI Engine Ready (scikit-learn)";
     public string DatabaseStatus { get; set; } = "SQLite Persistence Ready";

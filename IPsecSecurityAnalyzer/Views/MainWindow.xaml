@@ -116,7 +116,7 @@
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Text="IPsec Analyzer" Foreground="{StaticResource BrushTextPrimary}" FontSize="15" FontWeight="Bold" />
-                            <TextBlock Text="SIH26160 • SOC Platform" Foreground="{StaticResource BrushTextMuted}" FontSize="11" FontWeight="Medium" />
+                            <TextBlock Text="SOC Platform" Foreground="{StaticResource BrushTextMuted}" FontSize="11" FontWeight="Medium" />
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -287,19 +287,14 @@
                         <TextBlock Text="{Binding CurrentPageSubtitle}" Foreground="{StaticResource BrushTextMuted}" FontSize="12" Margin="0,2,0,0" />
                     </StackPanel>
 
-                    <!-- Active Capture Badge & SIH Tag -->
+                    <!-- Active Capture Badge -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <!-- PCAP Loaded Status Badge -->
-                        <Border Background="{StaticResource BrushBgInput}" BorderBrush="{StaticResource BrushBorderAccent}" BorderThickness="1" CornerRadius="6" Padding="12,6" Margin="0,0,10,0">
+                        <Border Background="{StaticResource BrushBgInput}" BorderBrush="{StaticResource BrushBorderAccent}" BorderThickness="1" CornerRadius="6" Padding="12,6">
                             <StackPanel Orientation="Horizontal">
                                 <Path Data="{StaticResource IconPcap}" Fill="{StaticResource BrushAccentCyan}" Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,6,0" />
                                 <TextBlock Text="{Binding ActivePcapName}" Foreground="{StaticResource BrushTextSecondary}" FontSize="11.5" FontWeight="Medium" MaxWidth="220" TextTrimming="CharacterEllipsis" />
                             </StackPanel>
-                        </Border>
-
-                        <!-- Hackathon Badge -->
-                        <Border Background="#10233D" BorderBrush="{StaticResource BrushAccentCyan}" BorderThickness="1" CornerRadius="6" Padding="10,6">
-                            <TextBlock Text="SIH26160" Foreground="{StaticResource BrushAccentCyan}" FontSize="11.5" FontWeight="Bold" />
                         </Border>
                     </StackPanel>
                 </Grid>

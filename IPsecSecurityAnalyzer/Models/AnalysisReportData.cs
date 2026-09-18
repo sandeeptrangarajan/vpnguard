@@ -13,7 +13,7 @@ public class AnalysisReportData
     // 1. Metadata
     public string AnalysisId { get; set; } = Guid.NewGuid().ToString();
     public DateTime AnalysisTimestamp { get; set; } = DateTime.UtcNow;
-    public string ApplicationVersion { get; set; } = "v1.0.0 (SIH26160)";
+    public string ApplicationVersion { get; set; } = "v1.0.0";
     public string Notes { get; set; } = string.Empty;
 
     // 2. PCAP & File Information

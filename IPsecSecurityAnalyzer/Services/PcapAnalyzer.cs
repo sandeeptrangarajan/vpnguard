@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.IO;
 using IPsecSecurityAnalyzer.Interfaces;
 using IPsecSecurityAnalyzer.Models;
@@ -93,7 +93,7 @@ public class PcapAnalyzer : IPcapAnalyzer
         }
 
         // 3. Build TShark arguments for direct extraction
-        // Field extraction query using -T fields
+        // Field extraction query using valid TShark fields
         var arguments = new List<string>
         {
             "-r", filePath,
@@ -123,25 +123,29 @@ public class PcapAnalyzer : IPcapAnalyzer
             "-e", "isakmp.exchangetype",
             "-e", "isakmp.ispi",
             "-e", "isakmp.rspi",
-            "-e", "isakmp.msgid",
+            "-e", "isakmp.messageid",
             "-e", "_ws.col.Protocol",
             "-e", "_ws.col.Info",
-            "-e", "isakmp.payload",
-            "-e", "isakmp.sa.transform.enc",
-            "-e", "isakmp.sa.transform.auth",
-            "-e", "isakmp.sa.transform.hash",
-            "-e", "isakmp.sa.transform.dh",
-            "-e", "isakmp.sa.transform.attr.keylen",
-            "-e", "isakmp.sa.transform.attr.lifeduration",
-            "-e", "ikev2.payload",
-            "-e", "ikev2.transform.enc",
-            "-e", "ikev2.transform.integ",
-            "-e", "ikev2.transform.dh",
-            "-e", "ikev2.transform.prf",
-            "-e", "ikev2.nonce",
-            "-e", "ikev2.ke.dh_group",
-            "-e", "ikev2.ke.data",
-            "-e", "ikev2.auth.method"
+            "-e", "isakmp.nextpayload",
+            "-e", "isakmp.typepayload",
+            "-e", "isakmp.ike.attr.encryption_algorithm",
+            "-e", "isakmp.ike.attr.hash_algorithm",
+            "-e", "isakmp.ike.attr.authentication_method",
+            "-e", "isakmp.ike.attr.group_description",
+            "-e", "isakmp.ike.attr.key_length",
+            "-e", "isakmp.ike.attr.life_duration",
+            "-e", "isakmp.ipsec.attr.auth_algorithm",
+            "-e", "isakmp.ipsec.attr.group_description",
+            "-e", "isakmp.ipsec.attr.life_duration",
+            "-e", "isakmp.ipsec.attr.key_length",
+            "-e", "isakmp.tf.id.encr",
+            "-e", "isakmp.tf.id.integ",
+            "-e", "isakmp.tf.id.prf",
+            "-e", "isakmp.tf.id.dh",
+            "-e", "isakmp.nonce",
+            "-e", "isakmp.key_exchange.dh_group",
+            "-e", "isakmp.key_exchange.data",
+            "-e", "isakmp.ike2.attr.key_length"
         };
 
         var execResult = await _tsharkService.ExecuteAsync(arguments, null, TimeSpan.FromSeconds(90), cancellationToken);
@@ -159,7 +163,7 @@ public class PcapAnalyzer : IPcapAnalyzer
         // Wireshark/TShark field names can vary slightly between releases. If the
         // deep-dissector query is rejected, retry with a conservative field set so
         // the application can still produce real packet statistics instead of failing
-        // the entire analysis. IPsec-specific fields are then simply marked unknown.
+        // the entire analysis.
         if (!execResult.IsSuccess && string.IsNullOrWhiteSpace(execResult.StandardOutput))
         {
             var fallbackArguments = new List<string>
@@ -183,6 +187,13 @@ public class PcapAnalyzer : IPcapAnalyzer
                 "-e", "udp.dstport",
                 "-e", "tcp.srcport",
                 "-e", "tcp.dstport",
+                "-e", "esp.spi",
+                "-e", "esp.sequence",
+                "-e", "isakmp.version",
+                "-e", "isakmp.exchangetype",
+                "-e", "isakmp.ispi",
+                "-e", "isakmp.rspi",
+                "-e", "isakmp.messageid",
                 "-e", "_ws.col.Protocol",
                 "-e", "_ws.col.Info"
             };
@@ -373,25 +384,25 @@ public class PcapAnalyzer : IPcapAnalyzer
             var isakmpEx = GetCol(cols, "isakmp.exchangetype");
             var isakmpIspi = GetCol(cols, "isakmp.ispi");
             var isakmpRspi = GetCol(cols, "isakmp.rspi");
-            var isakmpMsgid = GetCol(cols, "isakmp.msgid");
+            var isakmpMsgid = !string.IsNullOrEmpty(GetCol(cols, "isakmp.messageid")) ? GetCol(cols, "isakmp.messageid") : GetCol(cols, "isakmp.msgid");
 
-            // Phase 3 Deep fields
-            var isakmpPayload = GetCol(cols, "isakmp.payload");
-            var isakmpEnc = GetCol(cols, "isakmp.sa.transform.enc");
-            var isakmpAuth = GetCol(cols, "isakmp.sa.transform.auth");
-            var isakmpHash = GetCol(cols, "isakmp.sa.transform.hash");
-            var isakmpDh = GetCol(cols, "isakmp.sa.transform.dh");
-            var isakmpKeyLen = GetCol(cols, "isakmp.sa.transform.attr.keylen");
-            var isakmpLife = GetCol(cols, "isakmp.sa.transform.attr.lifeduration");
+            // Phase 3 Deep fields (support both Wireshark native isakmp.ike.attr.* / isakmp.tf.id.* and fallback/mock column names)
+            var isakmpPayload = !string.IsNullOrEmpty(GetCol(cols, "isakmp.typepayload")) ? GetCol(cols, "isakmp.typepayload") : (!string.IsNullOrEmpty(GetCol(cols, "isakmp.nextpayload")) ? GetCol(cols, "isakmp.nextpayload") : GetCol(cols, "isakmp.payload"));
+            var isakmpEnc = !string.IsNullOrEmpty(GetCol(cols, "isakmp.ike.attr.encryption_algorithm")) ? GetCol(cols, "isakmp.ike.attr.encryption_algorithm") : GetCol(cols, "isakmp.sa.transform.enc");
+            var isakmpAuth = !string.IsNullOrEmpty(GetCol(cols, "isakmp.ike.attr.authentication_method")) ? GetCol(cols, "isakmp.ike.attr.authentication_method") : GetCol(cols, "isakmp.sa.transform.auth");
+            var isakmpHash = !string.IsNullOrEmpty(GetCol(cols, "isakmp.ike.attr.hash_algorithm")) ? GetCol(cols, "isakmp.ike.attr.hash_algorithm") : (!string.IsNullOrEmpty(GetCol(cols, "isakmp.ipsec.attr.auth_algorithm")) ? GetCol(cols, "isakmp.ipsec.attr.auth_algorithm") : GetCol(cols, "isakmp.sa.transform.hash"));
+            var isakmpDh = !string.IsNullOrEmpty(GetCol(cols, "isakmp.ike.attr.group_description")) ? GetCol(cols, "isakmp.ike.attr.group_description") : (!string.IsNullOrEmpty(GetCol(cols, "isakmp.ipsec.attr.group_description")) ? GetCol(cols, "isakmp.ipsec.attr.group_description") : GetCol(cols, "isakmp.sa.transform.dh"));
+            var isakmpKeyLen = !string.IsNullOrEmpty(GetCol(cols, "isakmp.ike.attr.key_length")) ? GetCol(cols, "isakmp.ike.attr.key_length") : (!string.IsNullOrEmpty(GetCol(cols, "isakmp.ike2.attr.key_length")) ? GetCol(cols, "isakmp.ike2.attr.key_length") : (!string.IsNullOrEmpty(GetCol(cols, "isakmp.ipsec.attr.key_length")) ? GetCol(cols, "isakmp.ipsec.attr.key_length") : GetCol(cols, "isakmp.sa.transform.attr.keylen")));
+            var isakmpLife = !string.IsNullOrEmpty(GetCol(cols, "isakmp.ike.attr.life_duration")) ? GetCol(cols, "isakmp.ike.attr.life_duration") : (!string.IsNullOrEmpty(GetCol(cols, "isakmp.ipsec.attr.life_duration")) ? GetCol(cols, "isakmp.ipsec.attr.life_duration") : GetCol(cols, "isakmp.sa.transform.attr.lifeduration"));
 
-            var ikev2Payload = GetCol(cols, "ikev2.payload");
-            var ikev2Enc = GetCol(cols, "ikev2.transform.enc");
-            var ikev2Integ = GetCol(cols, "ikev2.transform.integ");
-            var ikev2Dh = GetCol(cols, "ikev2.transform.dh");
-            var ikev2Prf = GetCol(cols, "ikev2.transform.prf");
-            var ikev2Nonce = GetCol(cols, "ikev2.nonce");
-            var ikev2KeDh = GetCol(cols, "ikev2.ke.dh_group");
-            var ikev2KeData = GetCol(cols, "ikev2.ke.data");
+            var ikev2Payload = !string.IsNullOrEmpty(GetCol(cols, "isakmp.typepayload")) ? GetCol(cols, "isakmp.typepayload") : GetCol(cols, "ikev2.payload");
+            var ikev2Enc = !string.IsNullOrEmpty(GetCol(cols, "isakmp.tf.id.encr")) ? GetCol(cols, "isakmp.tf.id.encr") : GetCol(cols, "ikev2.transform.enc");
+            var ikev2Integ = !string.IsNullOrEmpty(GetCol(cols, "isakmp.tf.id.integ")) ? GetCol(cols, "isakmp.tf.id.integ") : GetCol(cols, "ikev2.transform.integ");
+            var ikev2Dh = !string.IsNullOrEmpty(GetCol(cols, "isakmp.tf.id.dh")) ? GetCol(cols, "isakmp.tf.id.dh") : GetCol(cols, "ikev2.transform.dh");
+            var ikev2Prf = !string.IsNullOrEmpty(GetCol(cols, "isakmp.tf.id.prf")) ? GetCol(cols, "isakmp.tf.id.prf") : GetCol(cols, "ikev2.transform.prf");
+            var ikev2Nonce = !string.IsNullOrEmpty(GetCol(cols, "isakmp.nonce")) ? GetCol(cols, "isakmp.nonce") : GetCol(cols, "ikev2.nonce");
+            var ikev2KeDh = !string.IsNullOrEmpty(GetCol(cols, "isakmp.key_exchange.dh_group")) ? GetCol(cols, "isakmp.key_exchange.dh_group") : GetCol(cols, "ikev2.ke.dh_group");
+            var ikev2KeData = !string.IsNullOrEmpty(GetCol(cols, "isakmp.key_exchange.data")) ? GetCol(cols, "isakmp.key_exchange.data") : GetCol(cols, "ikev2.ke.data");
             var ikev2Auth = GetCol(cols, "ikev2.auth.method");
 
             // Detect layers
@@ -781,6 +792,8 @@ public class PcapAnalyzer : IPcapAnalyzer
     public static string FormatEncryption(string enc, string? keyLen)
     {
         var trimmed = enc.Trim();
+        if (trimmed.Contains(',')) trimmed = trimmed.Split(',')[0].Trim();
+        if (keyLen != null && keyLen.Contains(',')) keyLen = keyLen.Split(',')[0].Trim();
         var lenStr = !string.IsNullOrWhiteSpace(keyLen) ? $" ({keyLen}-bit)" : "";
 
         return trimmed.ToLowerInvariant() switch
@@ -799,6 +812,7 @@ public class PcapAnalyzer : IPcapAnalyzer
     public static string FormatIntegrity(string integ)
     {
         var trimmed = integ.Trim();
+        if (trimmed.Contains(',')) trimmed = trimmed.Split(',')[0].Trim();
         return trimmed.ToLowerInvariant() switch
         {
             "1" or "md5" or "hmac-md5" => "HMAC-MD5-96 (Insecure)",
@@ -814,6 +828,7 @@ public class PcapAnalyzer : IPcapAnalyzer
     public static string FormatDhGroup(string dh)
     {
         var trimmed = dh.Trim();
+        if (trimmed.Contains(',')) trimmed = trimmed.Split(',')[0].Trim();
         return trimmed.ToLowerInvariant() switch
         {
             "1" or "group 1" or "modp-768" => "Group 1 (768-bit MODP - Insecure)",
@@ -834,6 +849,7 @@ public class PcapAnalyzer : IPcapAnalyzer
     public static string FormatAuthMethod(string auth)
     {
         var trimmed = auth.Trim();
+        if (trimmed.Contains(',')) trimmed = trimmed.Split(',')[0].Trim();
         return trimmed.ToLowerInvariant() switch
         {
             "1" or "psk" or "pre-shared" => "Pre-Shared Key (PSK)",
@@ -850,6 +866,7 @@ public class PcapAnalyzer : IPcapAnalyzer
     public static string FormatPrf(string prf)
     {
         var trimmed = prf.Trim();
+        if (trimmed.Contains(',')) trimmed = trimmed.Split(',')[0].Trim();
         return trimmed.ToLowerInvariant() switch
         {
             "1" => "PRF-HMAC-MD5 (Weak)",

@@ -1,7 +1,6 @@
 # VPNGuard (IPsec Security Analyzer) - Document Type & Report Format Specification
 
-**Smart India Hackathon 2026 — Problem Statement:** `SIH26160`  
-**Platform Version:** `v1.0.0 (SIH26160)`  
+**Platform Version:** `v1.0.0`  
 **Document Classification:** Technical Architecture & File Format Specification
 
 ---

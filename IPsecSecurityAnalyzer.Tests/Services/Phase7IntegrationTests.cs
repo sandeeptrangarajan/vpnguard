@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -248,12 +248,9 @@ public static class Phase7IntegrationTests
                 Assert(directCount >= 1, "Database Durability: Records remain intact across fresh DbContext instances without session loss");
             }
 
-            // Test 8: SIH Problem Statement & Version Constant Integrity
-            Assert(Utilities.Constants.AppConstants.ProblemStatement == "SIH26160",
-                "SIH Compliance: Problem statement constant SIH26160 is verified");
-
-            Assert(Utilities.Constants.AppConstants.Version.Contains("SIH26160"),
-                "SIH Compliance: Application version string reflects SIH26160 release",
+            // Test 8: Application Version Constant Integrity
+            Assert(!string.IsNullOrEmpty(Utilities.Constants.AppConstants.Version),
+                "Application version string is verified",
                 $"Version: {Utilities.Constants.AppConstants.Version}");
 
             // Clean up temporary files

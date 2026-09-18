@@ -216,7 +216,7 @@ public class ReportService : IReportService
 
         // Header / Banner
         lines.Add("VPNGuard - IPsec VPN Security Assessment Report");
-        lines.Add("Automated Protocol Audit & Compliance Analysis (SIH26160)");
+        lines.Add("Automated Protocol Audit & Compliance Analysis");
         lines.Add(new string('=', 78));
         lines.Add($"Analysis ID:       {report.AnalysisId}");
         lines.Add($"Generated Date:    {report.FormattedTimestamp}");
@@ -300,11 +300,11 @@ public class ReportService : IReportService
             {
                 lines.Add($"[{idx++}] {f.Severity.ToString().ToUpperInvariant()} - {f.Title}");
                 lines.Add($"     Rule ID:        {f.RuleId} (Category: {f.Category})");
-                lines.Add($"     Observed:       {f.ObservedValue}");
-                lines.Add($"     Recommendation: {f.Recommendation}");
+                AddWrappedField(lines, "     Observed:       ", f.ObservedValue);
+                AddWrappedField(lines, "     Recommendation: ", f.Recommendation);
                 if (!string.IsNullOrWhiteSpace(f.Evidence))
                 {
-                    lines.Add($"     Evidence:       {f.Evidence}");
+                    AddWrappedField(lines, "     Evidence:       ", f.Evidence);
                 }
                 lines.Add(string.Empty);
             }
@@ -326,8 +326,8 @@ public class ReportService : IReportService
             foreach (var r in report.Recommendations)
             {
                 lines.Add($"[{idx++}] {r.Priority.ToString().ToUpperInvariant()} Priority: {r.Title}");
-                lines.Add($"     Action:         {r.Recommendation}");
-                lines.Add($"     Reason:         {r.Reason}");
+                AddWrappedField(lines, "     Action:         ", r.Recommendation);
+                AddWrappedField(lines, "     Reason:         ", r.Reason);
                 lines.Add(string.Empty);
             }
         }
@@ -355,8 +355,22 @@ public class ReportService : IReportService
             }
             if (!string.IsNullOrWhiteSpace(report.AiExplanation))
             {
-                lines.Add(string.Empty);
-                lines.Add($"Inference Explanation: {report.AiExplanation}");
+                var explLines = report.AiExplanation.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                var customNotes = explLines
+                    .Where(l => !l.StartsWith("AI-Inferred Traffic Type", StringComparison.OrdinalIgnoreCase)
+                             && !l.StartsWith("Top contributing features", StringComparison.OrdinalIgnoreCase)
+                             && !l.TrimStart().StartsWith("- ", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                if (customNotes.Count > 0)
+                {
+                    lines.Add(string.Empty);
+                    lines.Add("Inference Notes:");
+                    foreach (var note in customNotes)
+                    {
+                        AddWrappedParagraph(lines, note, indentSpaces: 2, maxLineLength: 76);
+                    }
+                }
             }
         }
         else
@@ -379,14 +393,180 @@ public class ReportService : IReportService
     }
 
     /// <summary>
+    /// Adds a labeled field with word wrapping and aligned continuation lines.
+    /// Prevents long details (recommendations, evidence, actions) from clipping off the right margin.
+    /// </summary>
+    private static void AddWrappedField(List<string> lines, string label, string text, int maxLineLength = 76)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            lines.Add(label);
+            return;
+        }
+
+        var normalized = text.Replace("\r\n", " ").Replace('\r', ' ').Replace('\n', ' ').Trim();
+        var words = normalized.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+        var indent = new string(' ', label.Length);
+        var currentLine = new StringBuilder(label);
+
+        foreach (var word in words)
+        {
+            if (currentLine.Length + word.Length + 1 > maxLineLength && currentLine.Length > label.Length)
+            {
+                lines.Add(currentLine.ToString());
+                currentLine.Clear();
+                currentLine.Append(indent).Append(word);
+            }
+            else
+            {
+                if (currentLine.Length > label.Length || (currentLine.Length == label.Length && currentLine[currentLine.Length - 1] != ' '))
+                {
+                    currentLine.Append(' ');
+                }
+                currentLine.Append(word);
+            }
+        }
+
+        if (currentLine.Length > 0)
+        {
+            lines.Add(currentLine.ToString());
+        }
+    }
+
+    /// <summary>
+    /// Adds multi-line paragraph text with word wrapping and optional indent.
+    /// Automatically cleans and isolates raw newlines.
+    /// </summary>
+    private static void AddWrappedParagraph(List<string> lines, string text, int indentSpaces = 0, int maxLineLength = 76)
+    {
+        if (string.IsNullOrEmpty(text))
+            return;
+
+        var indent = indentSpaces > 0 ? new string(' ', indentSpaces) : string.Empty;
+        var rawLines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+
+        foreach (var rawLine in rawLines)
+        {
+            var trimmed = rawLine.Trim();
+            if (string.IsNullOrEmpty(trimmed))
+            {
+                lines.Add(string.Empty);
+                continue;
+            }
+
+            var words = trimmed.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            var currentLine = new StringBuilder(indent);
+
+            foreach (var word in words)
+            {
+                if (currentLine.Length + word.Length + 1 > maxLineLength && currentLine.Length > indent.Length)
+                {
+                    lines.Add(currentLine.ToString());
+                    currentLine.Clear();
+                    currentLine.Append(indent).Append(word);
+                }
+                else
+                {
+                    if (currentLine.Length > indent.Length)
+                    {
+                        currentLine.Append(' ');
+                    }
+                    currentLine.Append(word);
+                }
+            }
+
+            if (currentLine.Length > indent.Length)
+            {
+                lines.Add(currentLine.ToString());
+            }
+        }
+    }
+
+    /// <summary>
+    /// Intelligently paginates document lines, preventing orphaned section headers and broken blocks.
+    /// </summary>
+    private static List<List<string>> PaginateReport(IReadOnlyList<string> lines, int maxLinesPerPage = 52)
+    {
+        var pages = new List<List<string>>();
+        var currentPage = new List<string>();
+
+        for (int i = 0; i < lines.Count; i++)
+        {
+            var line = lines[i];
+
+            // Section headers: e.g. "1. ", "5. ", etc.
+            bool isSectionHeader = System.Text.RegularExpressions.Regex.IsMatch(line, @"^[1-8]\.\s+[A-Z]");
+
+            // Item headers: e.g. "[1] ", "[2] ", etc.
+            bool isItemHeader = System.Text.RegularExpressions.Regex.IsMatch(line, @"^\[\d+\]\s+[A-Z]");
+
+            // Avoid orphan section headers near page end
+            if (isSectionHeader && currentPage.Count > maxLinesPerPage - 6)
+            {
+                pages.Add(currentPage);
+                currentPage = new List<string>();
+            }
+            // Avoid orphan item headers near page end
+            else if (isItemHeader && currentPage.Count > maxLinesPerPage - 4)
+            {
+                pages.Add(currentPage);
+                currentPage = new List<string>();
+            }
+            else if (currentPage.Count >= maxLinesPerPage)
+            {
+                pages.Add(currentPage);
+                currentPage = new List<string>();
+            }
+
+            // Suppress leading empty lines at the top of a new page
+            if (currentPage.Count == 0 && string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
+
+            currentPage.Add(line);
+        }
+
+        if (currentPage.Count > 0)
+        {
+            pages.Add(currentPage);
+        }
+
+        if (pages.Count == 0)
+        {
+            pages.Add(new List<string> { string.Empty });
+        }
+
+        return pages;
+    }
+
+    /// <summary>
+    /// Converts Unicode symbols/punctuation to safe ASCII representation for standard PDF Type 1 Courier.
+    /// </summary>
+    private static string ToAsciiSafe(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return string.Empty;
+        return s
+            .Replace('’', '\'')
+            .Replace('‘', '\'')
+            .Replace('“', '"')
+            .Replace('”', '"')
+            .Replace('—', '-')
+            .Replace('–', '-')
+            .Replace('•', '*')
+            .Replace('…', '.');
+    }
+
+    /// <summary>
     /// Compiles a set of formatted text lines into a valid, standard-compliant PDF file.
     /// Uses Courier monospace typography with pagination, cross-reference table, and header/trailers.
     /// </summary>
     private static byte[] GenerateStandardPdf(IReadOnlyList<string> lines)
     {
-        const int LinesPerPage = 54;
-        var pageCount = (int)Math.Ceiling(lines.Count / (double)LinesPerPage);
-        if (pageCount < 1) pageCount = 1;
+        const int MaxLinesPerPage = 52;
+        var pages = PaginateReport(lines, MaxLinesPerPage);
+        var pageCount = pages.Count;
 
         var pdf = new MemoryStream();
         var offsets = new List<long>();
@@ -421,19 +601,24 @@ public class ReportService : IReportService
 
             // Page Object
             offsets.Add(pdf.Position);
-            Write($"{pageObjNum} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents {contentObjNum} 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Courier >> >> >> >>\nendobj\n");
+            Write($"{pageObjNum} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents {contentObjNum} 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >> >> >> >>\nendobj\n");
 
             // Content Stream Object
             offsets.Add(pdf.Position);
-            var pageLines = lines.Skip(p * LinesPerPage).Take(LinesPerPage).ToList();
+            var pageLines = pages[p];
 
             var streamBuilder = new StringBuilder();
             streamBuilder.Append("BT\n/F1 9.5 Tf\n12 TL\n45 745 Td\n");
 
             for (int i = 0; i < pageLines.Count; i++)
             {
-                var line = pageLines[i];
-                var escaped = line.Replace("\\", "\\\\").Replace("(", "\\(").Replace(")", "\\)");
+                var line = ToAsciiSafe(pageLines[i]);
+                var escaped = line
+                    .Replace("\\", "\\\\")
+                    .Replace("(", "\\(")
+                    .Replace(")", "\\)")
+                    .Replace("\r", "")
+                    .Replace("\n", "");
                 streamBuilder.Append($"({escaped}) '\n");
             }
 

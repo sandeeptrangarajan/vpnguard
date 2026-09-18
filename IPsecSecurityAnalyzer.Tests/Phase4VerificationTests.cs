@@ -582,6 +582,36 @@ public class Program
         passed += livePassed;
         failed += liveFailed;
 
+        // Verification: ipsec_risk_score_80.pcap Real Capture Analysis
+        string risk80Path = @"c:\Users\sande\Downloads\adhi1\ipsec_risk_score_80.pcap";
+        if (File.Exists(risk80Path))
+        {
+            Console.WriteLine("\n[SECTION D] Real PCAP Risk 80 Capture File Verification");
+            var realTsharkService = new TsharkService(new SettingsService());
+            if (realTsharkService.IsTsharkAvailable())
+            {
+                var realPcapAnalyzer = new PcapAnalyzer(realTsharkService);
+                var pcapRes = await realPcapAnalyzer.AnalyzeAsync(risk80Path);
+                var realIpsecAnalyzer = new IpsecAnalyzer(realPcapAnalyzer);
+                var ipsecRes = await realIpsecAnalyzer.GetIpsecAnalysisAsync();
+                var realAssessmentService = new SecurityAssessmentService(realIpsecAnalyzer, realPcapAnalyzer);
+                var risk80Assessment = await realAssessmentService.AssessAsync(ipsecRes, policy);
+
+                Assert(risk80Assessment.OverallRiskScore.HasValue && risk80Assessment.OverallRiskScore.Value == 80.0,
+                       $"Real PCAP Assessment: ipsec_risk_score_80.pcap correctly scores 80 / 100 (Observed: {risk80Assessment.OverallRiskScore})",
+                       $"Score: {risk80Assessment.OverallRiskScore}/100, Level: {risk80Assessment.RiskLevel}, Findings: {risk80Assessment.Findings.Count(f => f.Severity != SeverityLevel.Informational)}");
+
+                Assert(ipsecRes.EncryptionAlgorithm != null && ipsecRes.EncryptionAlgorithm.Contains("3DES"),
+                       $"Real PCAP Dissection: 3DES encryption extracted correctly (Observed: '{ipsecRes.EncryptionAlgorithm}')");
+
+                Assert(ipsecRes.DhGroup != null && ipsecRes.DhGroup.Contains("Group 2"),
+                       $"Real PCAP Dissection: DH Group 2 extracted correctly (Observed: '{ipsecRes.DhGroup}')");
+
+                Assert(ipsecRes.PfsEnabled == false,
+                       $"Real PCAP Dissection: PFS correctly identified as disabled (Observed: {ipsecRes.PfsEnabled})");
+            }
+        }
+
         Console.WriteLine("\n================================================================================");
         Console.WriteLine($"   Complete Test Suite: {passed} PASSED, {failed} FAILED");
         Console.WriteLine("================================================================================\n");

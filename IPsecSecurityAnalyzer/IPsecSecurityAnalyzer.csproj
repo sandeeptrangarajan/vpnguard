@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationTitle>IPsec Security Analyzer</ApplicationTitle>
-    <Company>Smart India Hackathon 2026 - SIH26160</Company>
+    <Company>VPNGuard Security</Company>
     <Product>IPsec Security Analyzer (Phase 1)</Product>
     <Description>AI-Powered IPsec VPN Protocol Analyzer and Security Assessment Framework</Description>
     <Version>1.0.0</Version>

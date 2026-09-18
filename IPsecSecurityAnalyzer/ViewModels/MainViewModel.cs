@@ -154,7 +154,7 @@ public class MainViewModel : ViewModelBase
         NavigationPage.Reports => "Generate and export auditor-grade PDF security compliance reports",
         NavigationPage.History => "Search and review previous IPsec analysis sessions and logs",
         NavigationPage.Settings => "Configure analyzer binaries, AI engine, SQLite database, and system preferences",
-        _ => "Smart India Hackathon 2026 - Problem Statement SIH26160"
+        _ => "IPsec VPN Protocol Analysis & Security Assessment Framework"
     };
 
     public string ActivePcapName
